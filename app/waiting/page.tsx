@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
-export default function WaitingPage() {
+function WaitingContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [progress, setProgress] = useState(0);
@@ -125,5 +125,17 @@ export default function WaitingPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function WaitingPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-2xl text-gray-600">Loading...</div>
+      </div>
+    }>
+      <WaitingContent />
+    </Suspense>
   );
 }

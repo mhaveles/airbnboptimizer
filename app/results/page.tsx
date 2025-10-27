@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
-export default function ResultsPage() {
+function ResultsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [recommendations, setRecommendations] = useState('');
@@ -156,9 +156,21 @@ export default function ResultsPage() {
 
         {/* Privacy Note */}
         <p className="text-center text-sm text-gray-500 mt-8">
-          Your privacy matters. We don't store your listing data or email address.
+          Your privacy matters. We don&apos;t store your listing data or email address.
         </p>
       </div>
     </div>
+  );
+}
+
+export default function ResultsPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-2xl text-gray-600">Loading...</div>
+      </div>
+    }>
+      <ResultsContent />
+    </Suspense>
   );
 }
