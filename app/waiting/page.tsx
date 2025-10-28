@@ -44,7 +44,55 @@ function WaitingContent() {
           throw new Error('Failed to process your request');
         }
 
-        const data = await response.json();
+        // Get response as text first to handle potential JSON parsing issues
+        let responseText = await response.text();
+
+        let data;
+        try {
+          // Try to parse the JSON response
+          data = JSON.parse(responseText);
+        } catch (parseError) {
+          // If JSON parsing fails, try to fix common JSON issues
+          console.error('JSON parse error:', parseError);
+          console.log('Original response:', responseText);
+
+          try {
+            // Attempt to fix the JSON by properly escaping newlines and special characters
+            // Extract the status and recommendations fields
+            const statusMatch = responseText.match(/"status"\s*:\s*"([^"]+)"/);
+            const status = statusMatch ? statusMatch[1] : 'success';
+
+            // Find the recommendations value (between "recommendations": " and the closing ")
+            let recommendations = '';
+            const recsStartIndex = responseText.indexOf('"recommendations"');
+
+            if (recsStartIndex !== -1) {
+              // Find the opening quote after "recommendations":
+              const valueStart = responseText.indexOf('"', recsStartIndex + 17);
+              if (valueStart !== -1) {
+                // Find the last closing brace to work backwards
+                const lastBrace = responseText.lastIndexOf('}');
+                // Extract everything between the opening quote and before the last }
+                const recsSection = responseText.substring(valueStart + 1, lastBrace);
+                // Remove the trailing quote and whitespace
+                recommendations = recsSection.replace(/"\s*$/, '').trim();
+              }
+            }
+
+            if (recommendations) {
+              data = {
+                status: status,
+                recommendations: recommendations
+              };
+              console.log('Successfully extracted recommendations');
+            } else {
+              throw new Error('Unable to parse response from server. Please try again.');
+            }
+          } catch (extractError) {
+            console.error('Extraction error:', extractError);
+            throw new Error('Unable to parse response from server. Please try again.');
+          }
+        }
 
         // Complete the progress bar
         setProgress(100);
@@ -60,6 +108,7 @@ function WaitingContent() {
 
       } catch (err) {
         clearInterval(progressInterval);
+        console.error('Error details:', err);
         setError(err instanceof Error ? err.message : 'An error occurred');
       }
     };
