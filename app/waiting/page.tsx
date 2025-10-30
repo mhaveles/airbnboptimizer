@@ -46,47 +46,88 @@ function WaitingContent() {
 
         // Get response as text first to handle potential JSON parsing issues
         let responseText = await response.text();
+        console.log('Response received, length:', responseText.length);
 
         let data;
         try {
           // Try to parse the JSON response
           data = JSON.parse(responseText);
+          console.log('JSON parsed successfully');
         } catch (parseError) {
-          // If JSON parsing fails, try to fix common JSON issues
+          // If JSON parsing fails, try multiple fallback methods
           console.error('JSON parse error:', parseError);
-          console.log('Original response:', responseText);
+          console.log('Original response (first 500 chars):', responseText.substring(0, 500));
 
           try {
-            // Attempt to fix the JSON by properly escaping newlines and special characters
-            // Extract the status and recommendations fields
-            const statusMatch = responseText.match(/"status"\s*:\s*"([^"]+)"/);
-            const status = statusMatch ? statusMatch[1] : 'success';
+            // Method 1: Try to fix common JSON issues by replacing literal newlines
+            let fixedJson = responseText
+              .replace(/\r\n/g, '\\n')  // Replace Windows newlines
+              .replace(/\n/g, '\\n')     // Replace Unix newlines
+              .replace(/\r/g, '\\n')     // Replace Mac newlines
+              .replace(/\t/g, '\\t');    // Replace tabs
 
-            // Find the recommendations value (between "recommendations": " and the closing ")
-            let recommendations = '';
-            const recsStartIndex = responseText.indexOf('"recommendations"');
+            try {
+              data = JSON.parse(fixedJson);
+              console.log('JSON fixed and parsed successfully (Method 1)');
+            } catch (fixError) {
+              console.log('Method 1 failed, trying Method 2');
 
-            if (recsStartIndex !== -1) {
-              // Find the opening quote after "recommendations":
-              const valueStart = responseText.indexOf('"', recsStartIndex + 17);
-              if (valueStart !== -1) {
-                // Find the last closing brace to work backwards
-                const lastBrace = responseText.lastIndexOf('}');
-                // Extract everything between the opening quote and before the last }
-                const recsSection = responseText.substring(valueStart + 1, lastBrace);
-                // Remove the trailing quote and whitespace
-                recommendations = recsSection.replace(/"\s*$/, '').trim();
+              // Method 2: Manual extraction with improved logic
+              const statusMatch = responseText.match(/"status"\s*:\s*"([^"]+)"/);
+              const status = statusMatch ? statusMatch[1] : 'success';
+
+              // Find recommendations using a more robust approach
+              let recommendations = '';
+
+              // Look for the pattern: "recommendations": " ... content ... "
+              const recsPattern = /"recommendations"\s*:\s*"([\s\S]*?)"\s*\}/;
+              const recsMatch = responseText.match(recsPattern);
+
+              if (recsMatch && recsMatch[1]) {
+                recommendations = recsMatch[1];
+                console.log('Recommendations extracted using regex pattern');
+              } else {
+                // Fallback: manual string extraction
+                const recsStartIndex = responseText.indexOf('"recommendations"');
+                if (recsStartIndex !== -1) {
+                  const valueStart = responseText.indexOf('"', recsStartIndex + 17);
+                  if (valueStart !== -1) {
+                    // Look for the ending quote followed by closing brace
+                    let valueEnd = valueStart + 1;
+                    let depth = 0;
+
+                    // Find the matching closing quote, handling escaped quotes
+                    for (let i = valueStart + 1; i < responseText.length; i++) {
+                      if (responseText[i] === '\\' && i + 1 < responseText.length) {
+                        i++; // Skip escaped character
+                        continue;
+                      }
+                      if (responseText[i] === '"') {
+                        // Check if this might be the closing quote
+                        const afterQuote = responseText.substring(i + 1, i + 5).trim();
+                        if (afterQuote.startsWith('}')) {
+                          valueEnd = i;
+                          break;
+                        }
+                      }
+                    }
+
+                    recommendations = responseText.substring(valueStart + 1, valueEnd);
+                    console.log('Recommendations extracted using manual parsing');
+                  }
+                }
               }
-            }
 
-            if (recommendations) {
-              data = {
-                status: status,
-                recommendations: recommendations
-              };
-              console.log('Successfully extracted recommendations');
-            } else {
-              throw new Error('Unable to parse response from server. Please try again.');
+              if (recommendations) {
+                data = {
+                  status: status,
+                  recommendations: recommendations
+                };
+                console.log('Successfully extracted recommendations (Method 2), length:', recommendations.length);
+              } else {
+                console.error('All extraction methods failed');
+                throw new Error('Unable to parse response from server. Please try again.');
+              }
             }
           } catch (extractError) {
             console.error('Extraction error:', extractError);
