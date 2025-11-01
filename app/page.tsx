@@ -10,13 +10,23 @@ export default function Home() {
   const [urlError, setUrlError] = useState('');
   const router = useRouter();
 
-  // Validate Airbnb listing URL
+  // Validate Airbnb listing URL - now accepts short links and vanity URLs
   const validateAirbnbUrl = (url: string): boolean => {
     if (!url) return false;
 
-    // Regex pattern: optional http(s)://, optional www., airbnb domain, /rooms/, digits, optional params
+    // Accept standard /rooms/ URLs
     const airbnbRoomsPattern = /^(https?:\/\/)?(www\.)?airbnb\.[a-z.]+\/rooms\/\d+/i;
-    return airbnbRoomsPattern.test(url);
+    if (airbnbRoomsPattern.test(url)) return true;
+
+    // Accept short links
+    const shortLinkPattern = /^(https?:\/\/)?(abnb\.me|airbnb\.app\.link|airbnb\.page\.link)\//i;
+    if (shortLinkPattern.test(url)) return true;
+
+    // Accept vanity URLs (/h/<slug>)
+    const vanityPattern = /^(https?:\/\/)?(www\.)?airbnb\.[a-z.]+\/h\//i;
+    if (vanityPattern.test(url)) return true;
+
+    return false;
   };
 
   const handleUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -30,7 +40,7 @@ export default function Home() {
 
     // Validate if URL is not empty
     if (url && !validateAirbnbUrl(url)) {
-      setUrlError('Please enter a valid Airbnb listing URL (must be a /rooms/ link)');
+      setUrlError('Please enter a valid Airbnb listing URL');
     } else {
       setUrlError('');
     }
@@ -41,18 +51,49 @@ export default function Home() {
 
     // Validate before submission
     if (!airbnbUrl || !validateAirbnbUrl(airbnbUrl)) {
-      setUrlError('Please enter a valid Airbnb listing URL (must be a /rooms/ link)');
+      setUrlError('Please enter a valid Airbnb listing URL');
       return;
     }
 
     setIsLoading(true);
+    setUrlError('');
 
-    // Navigate to waiting page with the URL and email
-    const params = new URLSearchParams({
-      url: airbnbUrl,
-      ...(email && { email }),
-    });
-    router.push(`/waiting?${params.toString()}`);
+    try {
+      // Normalize the URL through our API
+      const response = await fetch('/api/normalize-url', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ url: airbnbUrl }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || data.error) {
+        setUrlError(data.error || 'Unable to process this URL. Please check the link.');
+        setIsLoading(false);
+        return;
+      }
+
+      const normalizedUrl = data.normalizedUrl;
+      console.log('URL normalized:', airbnbUrl, '->', normalizedUrl);
+
+      // Update the input field with the normalized URL so user can see it
+      setAirbnbUrl(normalizedUrl);
+
+      // Navigate to waiting page with the normalized URL and email
+      const params = new URLSearchParams({
+        url: normalizedUrl,
+        ...(email && { email }),
+      });
+      router.push(`/waiting?${params.toString()}`);
+
+    } catch (error) {
+      console.error('Error normalizing URL:', error);
+      setUrlError('Failed to process URL. Please try again.');
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -83,7 +124,7 @@ export default function Home() {
               type="text"
               value={airbnbUrl}
               onChange={handleUrlChange}
-              placeholder="https://www.airbnb.com/rooms/..."
+              placeholder="Paste any Airbnb listing link (abnb.me, /rooms/, etc.)"
               className={`w-full px-6 py-4 text-lg border-2 rounded-lg focus:outline-none transition-colors ${
                 urlError
                   ? 'border-red-500 focus:border-red-500'
@@ -119,7 +160,7 @@ export default function Home() {
             disabled={isLoading || !airbnbUrl || !!urlError}
             className="w-full bg-airbnb-red hover:bg-[#E00007] text-white font-semibold py-4 px-8 rounded-lg text-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isLoading ? 'Processing...' : 'Optimize My Listing'}
+            {isLoading ? 'Verifying URL...' : 'Optimize My Listing'}
           </button>
         </form>
 
