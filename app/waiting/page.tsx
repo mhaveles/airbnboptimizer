@@ -76,6 +76,10 @@ function WaitingContent() {
               const statusMatch = responseText.match(/"status"\s*:\s*"([^"]+)"/);
               const status = statusMatch ? statusMatch[1] : 'success';
 
+              // Extract recordId
+              const recordIdMatch = responseText.match(/"recordId"\s*:\s*"([^"]+)"/);
+              const recordId = recordIdMatch ? recordIdMatch[1] : undefined;
+
               // Find recommendations using a more robust approach
               let recommendations = '';
 
@@ -121,9 +125,11 @@ function WaitingContent() {
               if (recommendations) {
                 data = {
                   status: status,
-                  recommendations: recommendations
+                  recommendations: recommendations,
+                  ...(recordId && { recordId: recordId })
                 };
                 console.log('Successfully extracted recommendations (Method 2), length:', recommendations.length);
+                if (recordId) console.log('Record ID extracted:', recordId);
               } else {
                 console.error('All extraction methods failed');
                 throw new Error('Unable to parse response from server. Please try again.');
@@ -143,6 +149,7 @@ function WaitingContent() {
           const params = new URLSearchParams({
             recommendations: data.recommendations || '',
             ...(email && { email }),
+            ...(data.recordId && { recordId: data.recordId }),
           });
           router.push(`/results?${params.toString()}`);
         }, 500);

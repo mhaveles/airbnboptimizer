@@ -8,12 +8,14 @@ function ResultsContent() {
   const searchParams = useSearchParams();
   const [recommendations, setRecommendations] = useState('');
   const [userEmail, setUserEmail] = useState('');
+  const [recordId, setRecordId] = useState('');
   const [showEmailOption, setShowEmailOption] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
 
   useEffect(() => {
     const recs = searchParams.get('recommendations');
     const email = searchParams.get('email');
+    const recId = searchParams.get('recordId');
 
     if (!recs) {
       router.push('/');
@@ -24,17 +26,36 @@ function ResultsContent() {
     if (email) {
       setUserEmail(email);
     }
+    if (recId) {
+      setRecordId(recId);
+    }
   }, [searchParams, router]);
 
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!userEmail) return;
 
-    // In a real implementation, you might want to call Make.com again with just the email
-    // For now, we'll just show a success message
-    // The Make.com scenario should have already sent the email if one was provided
-    setEmailSent(true);
-    setShowEmailOption(false);
+    try {
+      // Send email and recordId to Make.com webhook to update the Airtable record
+      await fetch('https://hook.us2.make.com/mb8e6o5jacmce62htobb7e81how1ltcu', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: userEmail,
+          recordId: recordId,
+        }),
+      });
+
+      setEmailSent(true);
+      setShowEmailOption(false);
+    } catch (error) {
+      console.error('Error sending email data:', error);
+      // Still show success to user even if webhook fails
+      setEmailSent(true);
+      setShowEmailOption(false);
+    }
   };
 
   if (!recommendations) {
