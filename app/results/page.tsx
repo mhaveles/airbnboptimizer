@@ -17,6 +17,12 @@ function ResultsContent() {
     const email = searchParams.get('email');
     const recId = searchParams.get('recordId');
 
+    console.log('Results page - URL params:', {
+      hasRecommendations: !!recs,
+      email,
+      recordId: recId
+    });
+
     if (!recs) {
       router.push('/');
       return;
@@ -28,6 +34,9 @@ function ResultsContent() {
     }
     if (recId) {
       setRecordId(recId);
+      console.log('Record ID set:', recId);
+    } else {
+      console.warn('No recordId found in URL parameters');
     }
   }, [searchParams, router]);
 
@@ -36,17 +45,28 @@ function ResultsContent() {
     if (!userEmail) return;
 
     try {
+      // Build payload - only include recordId if it exists
+      const payload: { email: string; email_source: string; recordId?: string } = {
+        email: userEmail,
+        email_source: 'results page',
+      };
+
+      if (recordId) {
+        payload.recordId = recordId;
+      }
+
+      console.log('Sending to webhook:', payload);
+
       // Send email and recordId to Make.com webhook to update the Airtable record
-      await fetch('https://hook.us2.make.com/mb8e6o5jacmce62htobb7e81how1ltcu', {
+      const response = await fetch('https://hook.us2.make.com/mb8e6o5jacmce62htobb7e81how1ltcu', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          email: userEmail,
-          recordId: recordId,
-        }),
+        body: JSON.stringify(payload),
       });
+
+      console.log('Webhook response status:', response.status);
 
       setEmailSent(true);
       setShowEmailOption(false);

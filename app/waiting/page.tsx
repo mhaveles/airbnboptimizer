@@ -53,6 +53,11 @@ function WaitingContent() {
           // Try to parse the JSON response
           data = JSON.parse(responseText);
           console.log('JSON parsed successfully');
+          console.log('Parsed data:', {
+            status: data.status,
+            hasRecommendations: !!data.recommendations,
+            recordId: data.recordId
+          });
         } catch (parseError) {
           // If JSON parsing fails, try multiple fallback methods
           console.error('JSON parse error:', parseError);
@@ -151,6 +156,13 @@ function WaitingContent() {
             ...(email && { email }),
             ...(data.recordId && { recordId: data.recordId }),
           });
+
+          console.log('Navigating to results with params:', {
+            hasRecommendations: !!(data.recommendations || ''),
+            email: email || 'none',
+            recordId: data.recordId || 'none'
+          });
+
           router.push(`/results?${params.toString()}`);
         }, 500);
 
