@@ -36,7 +36,7 @@ function WaitingContent() {
           },
           body: JSON.stringify({
             airbnbUrl,
-            ...(email && { email }),
+            ...(email && { email, email_source: "Home Page" }),
           }),
         });
 
