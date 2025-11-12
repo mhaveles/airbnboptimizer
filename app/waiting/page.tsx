@@ -55,6 +55,13 @@ function WaitingContent() {
           data = JSON.parse(responseText);
           console.log('JSON parsed successfully');
           console.log('Parsed data keys:', Object.keys(data));
+
+          // Normalize record_id to recordId if needed
+          if (data.record_id && !data.recordId) {
+            data.recordId = data.record_id;
+            console.log('Normalized record_id to recordId:', data.recordId);
+          }
+
           console.log('RecordId from parsed data:', data.recordId || '(not present)');
         } catch (parseError) {
           // If JSON parsing fails, try multiple fallback methods
@@ -79,8 +86,9 @@ function WaitingContent() {
               const statusMatch = responseText.match(/"status"\s*:\s*"([^"]+)"/);
               const status = statusMatch ? statusMatch[1] : 'success';
 
-              // Extract recordId
-              const recordIdMatch = responseText.match(/"recordId"\s*:\s*"([^"]+)"/);
+              // Extract recordId (check both camelCase and snake_case)
+              const recordIdMatch = responseText.match(/"recordId"\s*:\s*"([^"]+)"/) ||
+                                   responseText.match(/"record_id"\s*:\s*"([^"]+)"/);
               const recordId = recordIdMatch ? recordIdMatch[1] : undefined;
 
               // Find recommendations using a more robust approach
