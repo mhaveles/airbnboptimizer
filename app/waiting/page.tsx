@@ -79,6 +79,12 @@ function WaitingContent() {
             try {
               data = JSON.parse(fixedJson);
               console.log('JSON fixed and parsed successfully (Method 1)');
+
+              // Normalize record_id to recordId if needed
+              if (data.record_id && !data.recordId) {
+                data.recordId = data.record_id;
+                console.log('Normalized record_id to recordId:', data.recordId);
+              }
             } catch (fixError) {
               console.log('Method 1 failed, trying Method 2');
 
