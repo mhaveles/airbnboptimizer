@@ -47,6 +47,7 @@ function ResultsContent() {
     const payload = {
       email: userEmail,
       recordId: recordId,
+      email_source: "Results Page",
     };
 
     console.log('Submitting email capture with payload:', payload);
