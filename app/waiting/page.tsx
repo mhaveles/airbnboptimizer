@@ -47,12 +47,15 @@ function WaitingContent() {
         // Get response as text first to handle potential JSON parsing issues
         let responseText = await response.text();
         console.log('Response received, length:', responseText.length);
+        console.log('First 500 chars of response:', responseText.substring(0, 500));
 
         let data;
         try {
           // Try to parse the JSON response
           data = JSON.parse(responseText);
           console.log('JSON parsed successfully');
+          console.log('Parsed data keys:', Object.keys(data));
+          console.log('RecordId from parsed data:', data.recordId || '(not present)');
         } catch (parseError) {
           // If JSON parsing fails, try multiple fallback methods
           console.error('JSON parse error:', parseError);
@@ -144,12 +147,26 @@ function WaitingContent() {
         // Complete the progress bar
         setProgress(100);
 
+        console.log('Preparing to navigate to results page');
+        console.log('Data object:', {
+          hasRecommendations: !!data.recommendations,
+          hasRecordId: !!data.recordId,
+          recordId: data.recordId || '(not present)',
+          email: email || '(not provided)'
+        });
+
         // Wait a moment to show 100%, then navigate to results
         setTimeout(() => {
           const params = new URLSearchParams({
             recommendations: data.recommendations || '',
             ...(email && { email }),
             ...(data.recordId && { recordId: data.recordId }),
+          });
+          console.log('Navigation URL:', `/results?${params.toString()}`);
+          console.log('URL params being passed:', {
+            recommendations: data.recommendations ? 'present' : 'missing',
+            email: email || 'none',
+            recordId: data.recordId || 'none'
           });
           router.push(`/results?${params.toString()}`);
         }, 500);
