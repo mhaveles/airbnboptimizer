@@ -11,6 +11,8 @@ function ResultsContent() {
   const [recordId, setRecordId] = useState('');
   const [showEmailOption, setShowEmailOption] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
 
   useEffect(() => {
     const recs = searchParams.get('recommendations');
@@ -73,6 +75,50 @@ function ResultsContent() {
       setEmailSent(true);
       setShowEmailOption(false);
     }
+  };
+
+  // Share functionality
+  const getShareUrl = () => {
+    if (typeof window === 'undefined') return '';
+    const baseUrl = window.location.origin;
+    return `${baseUrl}?utm_source=Website+Referral+Button`;
+  };
+
+  const handleCopyLink = async () => {
+    const shareUrl = getShareUrl();
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 3000);
+    } catch (err) {
+      console.error('Failed to copy link:', err);
+    }
+  };
+
+  const handleShareFacebook = () => {
+    const shareUrl = getShareUrl();
+    window.open(
+      `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`,
+      '_blank',
+      'width=600,height=400'
+    );
+  };
+
+  const handleShareTwitter = () => {
+    const shareUrl = getShareUrl();
+    const text = 'Check out AirbnbOptimizer - Get AI-powered recommendations to improve your Airbnb listing!';
+    window.open(
+      `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(text)}`,
+      '_blank',
+      'width=600,height=400'
+    );
+  };
+
+  const handleShareEmail = () => {
+    const shareUrl = getShareUrl();
+    const subject = 'Check out AirbnbOptimizer';
+    const body = `I thought you might find this useful!\n\nAirbnbOptimizer provides AI-powered recommendations to improve your Airbnb listing.\n\nCheck it out: ${shareUrl}`;
+    window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   };
 
   if (!recommendations) {
@@ -185,12 +231,68 @@ function ResultsContent() {
             Optimize Another Listing
           </button>
           <button
-            onClick={() => window.print()}
+            onClick={() => setShowShareModal(!showShareModal)}
             className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-3 px-8 rounded-lg transition-colors"
           >
-            Print Results
+            Share with a Friend
           </button>
         </div>
+
+        {/* Share Modal */}
+        {showShareModal && (
+          <div className="mt-6 bg-white rounded-xl shadow-lg p-6 border-2 border-gray-200">
+            <h3 className="text-xl font-bold text-gray-900 mb-4 text-center">
+              Share AirbnbOptimizer
+            </h3>
+            <p className="text-gray-600 text-center mb-6">
+              Help your friends optimize their Airbnb listings!
+            </p>
+
+            {/* Copy Link */}
+            <div className="mb-6">
+              <button
+                onClick={handleCopyLink}
+                className="w-full bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold py-3 px-6 rounded-lg transition-colors flex items-center justify-center gap-2"
+              >
+                <span>{linkCopied ? '✓' : '🔗'}</span>
+                {linkCopied ? 'Link Copied!' : 'Copy Link'}
+              </button>
+            </div>
+
+            {/* Social Share Buttons */}
+            <div className="space-y-3">
+              <button
+                onClick={handleShareFacebook}
+                className="w-full bg-[#1877F2] hover:bg-[#166FE5] text-white font-semibold py-3 px-6 rounded-lg transition-colors flex items-center justify-center gap-2"
+              >
+                <span>📘</span>
+                Share on Facebook
+              </button>
+              <button
+                onClick={handleShareTwitter}
+                className="w-full bg-[#1DA1F2] hover:bg-[#1A8CD8] text-white font-semibold py-3 px-6 rounded-lg transition-colors flex items-center justify-center gap-2"
+              >
+                <span>🐦</span>
+                Share on Twitter
+              </button>
+              <button
+                onClick={handleShareEmail}
+                className="w-full bg-gray-600 hover:bg-gray-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors flex items-center justify-center gap-2"
+              >
+                <span>✉️</span>
+                Share via Email
+              </button>
+            </div>
+
+            {/* Close Button */}
+            <button
+              onClick={() => setShowShareModal(false)}
+              className="w-full mt-4 text-gray-500 hover:text-gray-700 font-medium py-2 transition-colors"
+            >
+              Close
+            </button>
+          </div>
+        )}
 
         {/* Privacy Note */}
         <p className="text-center text-sm text-gray-500 mt-8">
