@@ -3,12 +3,33 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
+// Type declaration for Google Analytics gtag function
+declare global {
+  interface Window {
+    gtag?: (...args: any[]) => void;
+  }
+}
+
 export default function Home() {
   const [airbnbUrl, setAirbnbUrl] = useState('');
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [urlError, setUrlError] = useState('');
   const router = useRouter();
+
+  // Helper function to track GA4 events with error handling
+  const trackEvent = (eventName: string, eventParams?: Record<string, any>) => {
+    try {
+      if (typeof window !== 'undefined' && window.gtag) {
+        window.gtag('event', eventName, eventParams);
+        console.log(`[GA4 Event] ${eventName}`, eventParams || {});
+      } else {
+        console.warn('[GA4 Event] gtag not available:', eventName);
+      }
+    } catch (error) {
+      console.error('[GA4 Event] Error tracking event:', eventName, error);
+    }
+  };
 
   // Validate Airbnb listing URL - now accepts short links and vanity URLs
   const validateAirbnbUrl = (url: string): boolean => {
@@ -46,8 +67,25 @@ export default function Home() {
     }
   };
 
+  // Track when user enters URL (on blur)
+  const handleUrlBlur = () => {
+    if (airbnbUrl && validateAirbnbUrl(airbnbUrl)) {
+      trackEvent('url_entered', {
+        url_type: airbnbUrl.includes('/rooms/') ? 'rooms' :
+                  airbnbUrl.includes('abnb.me') || airbnbUrl.includes('airbnb.app.link') ? 'short_link' :
+                  airbnbUrl.includes('/h/') ? 'vanity' : 'other'
+      });
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Track form submission
+    trackEvent('results_requested', {
+      has_email: !!email,
+      url_provided: !!airbnbUrl
+    });
 
     // Validate before submission
     if (!airbnbUrl || !validateAirbnbUrl(airbnbUrl)) {
@@ -124,6 +162,7 @@ export default function Home() {
               type="text"
               value={airbnbUrl}
               onChange={handleUrlChange}
+              onBlur={handleUrlBlur}
               placeholder="Paste any Airbnb listing link (abnb.me, /rooms/, etc.)"
               className={`w-full px-6 py-4 text-lg border-2 rounded-lg focus:outline-none transition-colors ${
                 urlError
