@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { trackError } from '@/lib/validation';
 
 // Type declaration for Google Analytics gtag function
 declare global {
@@ -10,12 +11,36 @@ declare global {
   }
 }
 
-export default function Home() {
+function HomeContent() {
   const [airbnbUrl, setAirbnbUrl] = useState('');
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [urlError, setUrlError] = useState('');
+  const [pageError, setPageError] = useState<string | null>(null);
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // Check for error messages in URL params (from redirects)
+  useEffect(() => {
+    const errorParam = searchParams.get('error');
+    if (errorParam) {
+      switch (errorParam) {
+        case 'missing_url':
+          setPageError('Please enter your Airbnb listing URL to get started.');
+          break;
+        case 'invalid_session':
+          setPageError('Your session expired. Please try again.');
+          break;
+        case 'missing_data':
+          setPageError('Something went wrong. Please try analyzing your listing again.');
+          break;
+        default:
+          setPageError('An error occurred. Please try again.');
+      }
+      // Clear the error from URL without refreshing
+      window.history.replaceState({}, '', '/');
+    }
+  }, [searchParams]);
 
   // Helper function to track GA4 events with error handling
   const trackEvent = (eventName: string, eventParams?: Record<string, any>) => {
@@ -129,6 +154,7 @@ export default function Home() {
 
     } catch (error) {
       console.error('Error normalizing URL:', error);
+      trackError('url_normalization_failed', error instanceof Error ? error.message : 'Unknown error');
       setUrlError('Failed to process URL. Please try again.');
       setIsLoading(false);
     }
@@ -146,6 +172,19 @@ export default function Home() {
         <p className="text-xl text-gray-600">
           Get AI-powered recommendations to improve your listing
         </p>
+
+        {/* Page Error Message */}
+        {pageError && (
+          <div className="bg-red-50 border-2 border-red-200 rounded-xl p-4">
+            <p className="text-red-700">{pageError}</p>
+            <button
+              onClick={() => setPageError(null)}
+              className="text-red-500 text-sm mt-2 hover:text-red-700"
+            >
+              Dismiss
+            </button>
+          </div>
+        )}
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-6 mt-12">
@@ -209,5 +248,17 @@ export default function Home() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-2xl text-gray-600">Loading...</div>
+      </div>
+    }>
+      <HomeContent />
+    </Suspense>
   );
 }
