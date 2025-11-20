@@ -13,6 +13,7 @@ function ResultsContent() {
   const [emailSent, setEmailSent] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
   useEffect(() => {
     const recs = searchParams.get('recommendations');
@@ -121,6 +122,46 @@ function ResultsContent() {
     window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   };
 
+  const handleGetFullDescription = async () => {
+    if (!recordId) {
+      console.error('No recordId available for payment');
+      alert('Unable to process payment. Please try again.');
+      return;
+    }
+
+    setIsProcessingPayment(true);
+
+    try {
+      const response = await fetch('/api/create-checkout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          recordId: recordId,
+          email: userEmail || undefined,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create checkout session');
+      }
+
+      const data = await response.json();
+
+      // Redirect to Stripe checkout
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        throw new Error('No checkout URL returned');
+      }
+    } catch (error) {
+      console.error('Payment error:', error);
+      alert('Failed to start checkout. Please try again.');
+      setIsProcessingPayment(false);
+    }
+  };
+
   if (!recommendations) {
     return null;
   }
@@ -153,6 +194,42 @@ function ResultsContent() {
               {recommendations}
             </div>
           </div>
+        </div>
+
+        {/* Get Full Description CTA */}
+        <div className="bg-gradient-to-r from-airbnb-red to-pink-600 rounded-xl shadow-lg p-8 mb-8 text-white">
+          <h3 className="text-2xl font-bold mb-4">
+            Want a Complete, Optimized Description?
+          </h3>
+          <p className="text-lg mb-6 opacity-90">
+            Get a professionally written, SEO-optimized listing description that implements all these recommendations and more.
+          </p>
+          <ul className="mb-6 space-y-2 text-sm opacity-90">
+            <li className="flex items-center gap-2">
+              <span>✓</span> Compelling headline and intro
+            </li>
+            <li className="flex items-center gap-2">
+              <span>✓</span> Keyword-optimized for search
+            </li>
+            <li className="flex items-center gap-2">
+              <span>✓</span> Highlights unique features
+            </li>
+            <li className="flex items-center gap-2">
+              <span>✓</span> Professional tone and formatting
+            </li>
+          </ul>
+          <button
+            onClick={handleGetFullDescription}
+            disabled={isProcessingPayment || !recordId}
+            className="bg-white text-airbnb-red font-bold py-4 px-8 rounded-lg hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isProcessingPayment ? 'Processing...' : 'Get Full Description - $9.99'}
+          </button>
+          {!recordId && (
+            <p className="text-sm mt-3 opacity-75">
+              Unable to process payment. Please try optimizing your listing again.
+            </p>
+          )}
         </div>
 
         {/* Email Option Card */}
