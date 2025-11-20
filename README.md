@@ -57,19 +57,24 @@ npm start
 
 3. **Results Page** (`/results`)
    - Displays AI-generated recommendations
-   - Option to email results (if not already provided)
+   - Option to email results (if not already provided) - uses separate email capture webhook
    - "Optimize Another Listing" button
-   - Print functionality
+   - Share with a friend functionality (copy link, Facebook, Twitter, Email)
 
 ## Make.com Integration
 
+### Primary Analysis Webhook
+
 **Webhook URL**: `https://hook.us2.make.com/pveeaemxf16qf49huq98532vegvbu2sn`
+
+Used on the waiting page to analyze the Airbnb listing and generate recommendations.
 
 **Request Format**:
 ```json
 {
   "airbnbUrl": "https://www.airbnb.com/rooms/...",
-  "email": "optional@email.com"
+  "email": "optional@email.com",
+  "email_source": "Home Page"
 }
 ```
 
@@ -77,9 +82,27 @@ npm start
 ```json
 {
   "status": "success",
-  "recommendations": "AI-generated text recommendations..."
+  "recommendations": "AI-generated text recommendations...",
+  "recordId": "rec123abc"
 }
 ```
+
+### Email Capture Webhook
+
+**Webhook URL**: `https://hook.us2.make.com/mb8e6o5jacmce62htobb7e81how1ltcu`
+
+Used on the results page when a user who didn't provide an email initially wants to receive their recommendations via email. Updates the existing Airtable record with the email address.
+
+**Request Format**:
+```json
+{
+  "email": "user@email.com",
+  "recordId": "rec123abc",
+  "email_source": "Results Page"
+}
+```
+
+**Response**: HTTP 200 on success
 
 ## Design
 
