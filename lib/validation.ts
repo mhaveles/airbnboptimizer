@@ -156,10 +156,3 @@ export function trackError(
 export function getErrorInfo(errorType: keyof typeof ERROR_MESSAGES): ErrorInfo {
   return ERROR_MESSAGES[errorType];
 }
-
-// Declare gtag on window for TypeScript
-declare global {
-  interface Window {
-    gtag?: (...args: any[]) => void;
-  }
-}
