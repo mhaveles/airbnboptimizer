@@ -1,12 +1,12 @@
 # AirbnbOptimizer
 
-An AI-powered tool to optimize Airbnb listings with personalized recommendations.
+Optimize your Airbnb listing to rank higher in search and get more bookings.
 
 ## Features
 
 - **Simple Landing Page**: Clean, Airbnb-style interface to submit your listing URL
-- **Real-time Progress**: Visual progress bar during AI analysis (30-60 seconds)
-- **AI Recommendations**: Personalized suggestions powered by GPT via Make.com
+- **Real-time Progress**: Visual progress bar during analysis (30-60 seconds)
+- **Expert Recommendations**: Personalized optimization suggestions via Make.com
 - **Flexible Delivery**: View results on-screen or receive them via email
 - **Privacy-First**: No data storage, anonymous usage option
 
@@ -16,7 +16,7 @@ An AI-powered tool to optimize Airbnb listings with personalized recommendations
 - **React 19** - UI library
 - **TypeScript** - Type safety
 - **Tailwind CSS** - Styling
-- **Make.com** - Webhook automation and AI integration
+- **Make.com** - Webhook automation and analysis integration
 
 ## Getting Started
 
@@ -56,7 +56,7 @@ npm start
    - Displays analysis progress (30-60 seconds)
 
 3. **Results Page** (`/results`)
-   - Displays AI-generated recommendations
+   - Displays optimization recommendations
    - Option to email results (if not already provided)
    - "Optimize Another Listing" button
    - Print functionality
