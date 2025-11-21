@@ -284,7 +284,7 @@ function WaitingContent() {
             {error.action === 'retry' ? '⚠️' : '❌'}
           </div>
           <h2 className="text-2xl font-bold text-gray-900">
-            {error.action === 'timeout' ? 'Taking Too Long' : 'Oops!'}
+            Oops!
           </h2>
           <p className="text-gray-600">{error.userMessage}</p>
           <div className="space-y-3">
