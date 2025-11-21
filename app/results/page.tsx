@@ -2,6 +2,12 @@
 
 import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import {
+  validateRecordId,
+  trackError,
+  ERROR_MESSAGES,
+  type ErrorInfo
+} from '@/lib/validation';
 
 function ResultsContent() {
   const router = useRouter();
@@ -11,8 +17,10 @@ function ResultsContent() {
   const [recordId, setRecordId] = useState('');
   const [showEmailOption, setShowEmailOption] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
+  const [emailError, setEmailError] = useState<string | null>(null);
   const [showShareModal, setShowShareModal] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
+  const [error, setError] = useState<ErrorInfo | null>(null);
 
   useEffect(() => {
     const recs = searchParams.get('recommendations');
@@ -25,9 +33,21 @@ function ResultsContent() {
       recordId: recId || 'none'
     });
 
+    // Validate recommendations exist
     if (!recs) {
-      router.push('/');
+      trackError('missing_recommendations', 'No recommendations in URL params');
+      setError(ERROR_MESSAGES.MISSING_RECOMMENDATIONS);
       return;
+    }
+
+    // Validate recordId
+    const recordIdValidation = validateRecordId(recId);
+    if (!recordIdValidation.isValid) {
+      console.warn('RecordId validation failed:', recordIdValidation.error);
+      trackError('invalid_recordId', recordIdValidation.error || 'Unknown error', {
+        recordId: recId || 'null'
+      });
+      // Don't block the user - just warn that some features may not work
     }
 
     setRecommendations(recs);
@@ -38,13 +58,20 @@ function ResultsContent() {
       setRecordId(recId);
       console.log('RecordId set in state:', recId);
     } else {
-      console.warn('No recordId found in URL parameters');
+      console.warn('No recordId found in URL parameters - email capture may not work correctly');
     }
   }, [searchParams, router]);
 
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!userEmail) return;
+
+    // Validate recordId before sending
+    if (!recordId) {
+      trackError('email_submit_no_recordId', 'Attempted email submit without recordId');
+      setEmailError('Unable to save your email. Please try again from the beginning.');
+      return;
+    }
 
     const payload = {
       email: userEmail,
@@ -54,6 +81,8 @@ function ResultsContent() {
 
     console.log('Submitting email capture with payload:', payload);
     console.log('RecordId value:', recordId || '(empty string)');
+
+    setEmailError(null);
 
     try {
       // Send email and recordId to Make.com webhook to update the Airtable record
@@ -67,13 +96,19 @@ function ResultsContent() {
 
       console.log('Email webhook response status:', response.status);
 
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
       setEmailSent(true);
       setShowEmailOption(false);
     } catch (error) {
       console.error('Error sending email data:', error);
-      // Still show success to user even if webhook fails
-      setEmailSent(true);
-      setShowEmailOption(false);
+      trackError('email_webhook_failed', error instanceof Error ? error.message : 'Unknown error', {
+        recordId: recordId
+      });
+      // Show error but don't block the user
+      setEmailError('Failed to save your email. Please try again.');
     }
   };
 
@@ -120,6 +155,25 @@ function ResultsContent() {
     const body = `I thought you might find this useful!\n\nAirbnbOptimizer provides AI-powered recommendations to improve your Airbnb listing.\n\nCheck it out: ${shareUrl}`;
     window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   };
+
+  // Show error state
+  if (error) {
+    return (
+      <div className="min-h-screen bg-white flex flex-col items-center justify-center px-4">
+        <div className="max-w-md w-full text-center space-y-6">
+          <div className="text-6xl">❌</div>
+          <h2 className="text-2xl font-bold text-gray-900">Something Went Wrong</h2>
+          <p className="text-gray-600">{error.userMessage}</p>
+          <button
+            onClick={() => router.push('/')}
+            className="bg-airbnb-red hover:bg-[#E00007] text-white font-semibold py-3 px-8 rounded-lg transition-colors"
+          >
+            Start Over
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (!recommendations) {
     return null;
@@ -183,11 +237,17 @@ function ResultsContent() {
                 <input
                   type="email"
                   value={userEmail}
-                  onChange={(e) => setUserEmail(e.target.value)}
+                  onChange={(e) => {
+                    setUserEmail(e.target.value);
+                    setEmailError(null);
+                  }}
                   placeholder="your@email.com"
                   className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-airbnb-red transition-colors"
                   required
                 />
+                {emailError && (
+                  <p className="text-red-500 text-sm">{emailError}</p>
+                )}
                 <div className="flex gap-3">
                   <button
                     type="submit"
@@ -197,7 +257,10 @@ function ResultsContent() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => setShowEmailOption(false)}
+                    onClick={() => {
+                      setShowEmailOption(false);
+                      setEmailError(null);
+                    }}
                     className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-3 px-6 rounded-lg transition-colors"
                   >
                     Cancel

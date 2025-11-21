@@ -1,22 +1,45 @@
 'use client';
 
-import { useEffect, useState, Suspense } from 'react';
+import { useEffect, useState, Suspense, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import {
+  validateWebhookResponse,
+  trackError,
+  ERROR_MESSAGES,
+  type ErrorInfo
+} from '@/lib/validation';
+
+const TIMEOUT_MS = 60000; // 60 second timeout
 
 function WaitingContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [progress, setProgress] = useState(0);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<ErrorInfo | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     const airbnbUrl = searchParams.get('url');
     const email = searchParams.get('email');
 
+    // Validate URL is present
     if (!airbnbUrl) {
-      router.push('/');
+      trackError('missing_url', 'No URL provided to waiting page');
+      router.push('/?error=missing_url');
       return;
     }
+
+    // Create abort controller for timeout
+    abortControllerRef.current = new AbortController();
+
+    // Set up timeout
+    const timeoutId = setTimeout(() => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+      trackError('timeout', 'Webhook request timed out', { url: airbnbUrl });
+      setError(ERROR_MESSAGES.TIMEOUT);
+    }, TIMEOUT_MS);
 
     // Simulate progress bar (since Make responds synchronously)
     const progressInterval = setInterval(() => {
@@ -38,9 +61,13 @@ function WaitingContent() {
             airbnbUrl,
             ...(email && { email, email_source: "Home Page" }),
           }),
+          signal: abortControllerRef.current?.signal,
         });
 
+        clearTimeout(timeoutId);
+
         if (!response.ok) {
+          trackError('webhook_http_error', `HTTP ${response.status}`, { url: airbnbUrl });
           throw new Error('Failed to process your request');
         }
 
@@ -115,7 +142,6 @@ function WaitingContent() {
                   if (valueStart !== -1) {
                     // Look for the ending quote followed by closing brace
                     let valueEnd = valueStart + 1;
-                    let depth = 0;
 
                     // Find the matching closing quote, handling escaped quotes
                     for (let i = valueStart + 1; i < responseText.length; i++) {
@@ -149,12 +175,35 @@ function WaitingContent() {
                 if (recordId) console.log('Record ID extracted:', recordId);
               } else {
                 console.error('All extraction methods failed');
+                trackError('parse_failed', 'Unable to parse webhook response', {
+                  responseLength: responseText.length
+                });
                 throw new Error('Unable to parse response from server. Please try again.');
               }
             }
           } catch (extractError) {
             console.error('Extraction error:', extractError);
+            trackError('extraction_failed', 'Failed to extract data from response');
             throw new Error('Unable to parse response from server. Please try again.');
+          }
+        }
+
+        // Validate the webhook response
+        const validation = validateWebhookResponse(data);
+        if (!validation.isValid) {
+          console.error('Webhook response validation failed:', validation.error);
+          trackError('validation_failed', validation.error || 'Unknown validation error', {
+            hasStatus: !!data.status,
+            hasRecordId: !!(data.recordId || data.record_id),
+            hasRecommendations: !!data.recommendations,
+          });
+
+          // If we have recommendations but missing recordId, still proceed but warn
+          if (data.recommendations && !data.recordId) {
+            console.warn('Proceeding without recordId - some features may not work');
+          } else if (!data.recommendations) {
+            setError(ERROR_MESSAGES.MISSING_RECOMMENDATIONS);
+            return;
           }
         }
 
@@ -187,29 +236,77 @@ function WaitingContent() {
 
       } catch (err) {
         clearInterval(progressInterval);
+        clearTimeout(timeoutId);
+
+        // Handle abort (timeout)
+        if (err instanceof Error && err.name === 'AbortError') {
+          // Already handled by timeout
+          return;
+        }
+
         console.error('Error details:', err);
-        setError(err instanceof Error ? err.message : 'An error occurred');
+        const errorMessage = err instanceof Error ? err.message : 'An error occurred';
+
+        // Determine error type and set appropriate error info
+        if (errorMessage.includes('network') || errorMessage.includes('fetch')) {
+          trackError('network_error', errorMessage);
+          setError(ERROR_MESSAGES.NETWORK_ERROR);
+        } else if (errorMessage.includes('parse')) {
+          trackError('parse_error', errorMessage);
+          setError(ERROR_MESSAGES.WEBHOOK_INVALID_RESPONSE);
+        } else {
+          trackError('webhook_error', errorMessage);
+          setError({
+            userMessage: errorMessage,
+            technicalMessage: errorMessage,
+            action: 'retry',
+          });
+        }
       }
     };
 
     callMakeWebhook();
 
-    return () => clearInterval(progressInterval);
+    return () => {
+      clearInterval(progressInterval);
+      clearTimeout(timeoutId);
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
   }, [searchParams, router]);
 
   if (error) {
     return (
       <div className="min-h-screen bg-white flex flex-col items-center justify-center px-4">
         <div className="max-w-md w-full text-center space-y-6">
-          <div className="text-6xl">⚠️</div>
-          <h2 className="text-2xl font-bold text-gray-900">Oops!</h2>
-          <p className="text-gray-600">{error}</p>
-          <button
-            onClick={() => router.push('/')}
-            className="bg-airbnb-red hover:bg-[#E00007] text-white font-semibold py-3 px-8 rounded-lg transition-colors"
-          >
-            Try Again
-          </button>
+          <div className="text-6xl">
+            {error.action === 'retry' ? '⚠️' : '❌'}
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900">
+            Oops!
+          </h2>
+          <p className="text-gray-600">{error.userMessage}</p>
+          <div className="space-y-3">
+            {error.action === 'retry' && (
+              <button
+                onClick={() => window.location.reload()}
+                className="w-full bg-airbnb-red hover:bg-[#E00007] text-white font-semibold py-3 px-8 rounded-lg transition-colors"
+              >
+                Try Again
+              </button>
+            )}
+            <button
+              onClick={() => router.push('/')}
+              className={`w-full font-semibold py-3 px-8 rounded-lg transition-colors ${
+                error.action === 'retry'
+                  ? 'bg-gray-200 hover:bg-gray-300 text-gray-800'
+                  : 'bg-airbnb-red hover:bg-[#E00007] text-white'
+              }`}
+            >
+              {error.action === 'retry' ? 'Start Over' : 'Go Back Home'}
+            </button>
+          </div>
         </div>
       </div>
     );
