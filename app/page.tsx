@@ -170,7 +170,7 @@ function HomeContent() {
 
         {/* Subtitle */}
         <p className="text-xl text-gray-600">
-          Get AI-powered recommendations to improve your listing
+          Rank higher in Airbnb search. Get more eyes on your listing.
         </p>
 
         {/* Page Error Message */}

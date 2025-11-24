@@ -327,7 +327,7 @@ function WaitingContent() {
             Analyzing your listing...
           </h2>
           <p className="text-gray-600">
-            Our AI is reviewing your Airbnb listing to provide personalized recommendations
+            We&apos;re analyzing your listing to find the highest-impact tweaks. Small changes = big $$$
           </p>
         </div>
 
