@@ -266,7 +266,7 @@ function ResultsContent() {
             {/* Single Description */}
             <div className="bg-white/10 rounded-lg p-6 border border-white/20">
               <h3 className="text-xl font-bold mb-2">Single Description</h3>
-              <p className="text-3xl font-bold mb-4">$39</p>
+              <p className="text-3xl font-bold mb-4">$29</p>
               <ul className="text-sm text-gray-300 mb-6 space-y-2">
                 <li>Full optimized description</li>
                 <li>SEO-friendly title suggestions</li>
@@ -277,7 +277,7 @@ function ResultsContent() {
                 disabled={checkoutLoading !== null}
                 className="w-full bg-airbnb-red hover:bg-[#E00007] disabled:bg-gray-500 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
               >
-                {checkoutLoading === 'single' ? 'Loading...' : 'Buy Full Description - $39'}
+                {checkoutLoading === 'single' ? 'Loading...' : 'Buy Full Description - $29'}
               </button>
             </div>
 
@@ -289,7 +289,7 @@ function ResultsContent() {
                 </span>
               </div>
               <h3 className="text-xl font-bold mb-2">3-Pack Bundle</h3>
-              <p className="text-3xl font-bold mb-1">$99</p>
+              <p className="text-3xl font-bold mb-1">$69</p>
               <p className="text-sm text-green-400 mb-3">Save 33%</p>
               <ul className="text-sm text-gray-300 mb-6 space-y-2">
                 <li>3 full optimized descriptions</li>
@@ -301,7 +301,7 @@ function ResultsContent() {
                 disabled={checkoutLoading !== null}
                 className="w-full bg-airbnb-red hover:bg-[#E00007] disabled:bg-gray-500 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
               >
-                {checkoutLoading === 'bundle' ? 'Loading...' : 'Buy 3-Pack Bundle - $99'}
+                {checkoutLoading === 'bundle' ? 'Loading...' : 'Buy 3-Pack Bundle - $69'}
               </button>
             </div>
           </div>
