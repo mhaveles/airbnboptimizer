@@ -9,6 +9,12 @@ import {
   type ErrorInfo
 } from '@/lib/validation';
 
+// Stripe Price IDs
+const PRICE_IDS = {
+  single: 'price_1SWvtDDMcCJIBpshZhhSXytp',
+  bundle: 'price_1SWvuZDMcCJIBpshWJqUOx6T',
+};
+
 function ResultsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -21,6 +27,7 @@ function ResultsContent() {
   const [showShareModal, setShowShareModal] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
   const [error, setError] = useState<ErrorInfo | null>(null);
+  const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
 
   useEffect(() => {
     const recs = searchParams.get('recommendations');
@@ -156,6 +163,41 @@ function ResultsContent() {
     window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   };
 
+  const handleCheckout = async (priceId: string, productType: string) => {
+    setCheckoutLoading(productType);
+
+    try {
+      const response = await fetch('/api/create-checkout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          priceId,
+          recordId,
+          email: userEmail,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to create checkout session');
+      }
+
+      if (data.url) {
+        window.location.href = data.url;
+      }
+    } catch (error) {
+      console.error('Checkout error:', error);
+      trackError('checkout_failed', error instanceof Error ? error.message : 'Unknown error', {
+        recordId,
+        priceId,
+      });
+      setCheckoutLoading(null);
+    }
+  };
+
   // Show error state
   if (error) {
     return (
@@ -205,6 +247,62 @@ function ResultsContent() {
           <div className="prose prose-lg max-w-none">
             <div className="whitespace-pre-wrap text-gray-700 leading-relaxed">
               {recommendations}
+            </div>
+          </div>
+        </div>
+
+        {/* Premium Purchase Section */}
+        <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl shadow-lg p-8 mb-8 text-white">
+          <div className="text-center mb-6">
+            <h2 className="text-2xl font-bold mb-2">
+              Get Your Full Optimized Description
+            </h2>
+            <p className="text-gray-300">
+              Rank higher in search results and book more guests with a professionally crafted listing description
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-4">
+            {/* Single Description */}
+            <div className="bg-white/10 rounded-lg p-6 border border-white/20">
+              <h3 className="text-xl font-bold mb-2">Single Description</h3>
+              <p className="text-3xl font-bold mb-4">$39</p>
+              <ul className="text-sm text-gray-300 mb-6 space-y-2">
+                <li>Full optimized description</li>
+                <li>SEO-friendly title suggestions</li>
+                <li>Delivered within 24 hours</li>
+              </ul>
+              <button
+                onClick={() => handleCheckout(PRICE_IDS.single, 'single')}
+                disabled={checkoutLoading !== null}
+                className="w-full bg-airbnb-red hover:bg-[#E00007] disabled:bg-gray-500 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
+              >
+                {checkoutLoading === 'single' ? 'Loading...' : 'Buy Full Description - $39'}
+              </button>
+            </div>
+
+            {/* 3-Pack Bundle */}
+            <div className="bg-white/10 rounded-lg p-6 border-2 border-airbnb-red relative">
+              <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                <span className="bg-airbnb-red text-white text-xs font-bold px-3 py-1 rounded-full">
+                  BEST VALUE
+                </span>
+              </div>
+              <h3 className="text-xl font-bold mb-2">3-Pack Bundle</h3>
+              <p className="text-3xl font-bold mb-1">$99</p>
+              <p className="text-sm text-green-400 mb-3">Save 33%</p>
+              <ul className="text-sm text-gray-300 mb-6 space-y-2">
+                <li>3 full optimized descriptions</li>
+                <li>SEO-friendly title suggestions</li>
+                <li>Delivered within 24 hours</li>
+              </ul>
+              <button
+                onClick={() => handleCheckout(PRICE_IDS.bundle, 'bundle')}
+                disabled={checkoutLoading !== null}
+                className="w-full bg-airbnb-red hover:bg-[#E00007] disabled:bg-gray-500 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
+              >
+                {checkoutLoading === 'bundle' ? 'Loading...' : 'Buy 3-Pack Bundle - $99'}
+              </button>
             </div>
           </div>
         </div>
