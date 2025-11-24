@@ -290,7 +290,7 @@ function ResultsContent() {
               </div>
               <h3 className="text-xl font-bold mb-2">3-Pack Bundle</h3>
               <p className="text-3xl font-bold mb-1">$69</p>
-              <p className="text-sm text-green-400 mb-3">Save 33%</p>
+              <p className="text-sm text-green-400 mb-3">Save 20%</p>
               <ul className="text-sm text-gray-300 mb-6 space-y-2">
                 <li>3 full optimized descriptions</li>
                 <li>SEO-friendly title suggestions</li>
