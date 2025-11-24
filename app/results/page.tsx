@@ -141,7 +141,7 @@ function ResultsContent() {
 
   const handleShareTwitter = () => {
     const shareUrl = getShareUrl();
-    const text = 'Check out AirbnbOptimizer - Optimize your Airbnb listing to rank higher and get more bookings!';
+    const text = 'Just ranked my Airbnb listing higher with @airbnboptimizer 📈 More views = more bookings 💰';
     window.open(
       `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(text)}`,
       '_blank',
@@ -152,7 +152,7 @@ function ResultsContent() {
   const handleShareEmail = () => {
     const shareUrl = getShareUrl();
     const subject = 'Check out AirbnbOptimizer';
-    const body = `I thought you might find this useful!\n\nAirbnbOptimizer helps you optimize your Airbnb listing to rank higher in search and get more bookings.\n\nCheck it out: ${shareUrl}`;
+    const body = `I thought you might find this useful!\n\nAirbnbOptimizer shows you exactly what to fix so your listing ranks higher and books more guests.\n\nCheck it out: ${shareUrl}`;
     window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   };
 
@@ -200,7 +200,7 @@ function ResultsContent() {
         {/* Recommendations Card */}
         <div className="bg-white rounded-xl shadow-lg p-8 mb-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-6">
-            Your Optimization Recommendations
+            Your Action Plan
           </h2>
           <div className="prose prose-lg max-w-none">
             <div className="whitespace-pre-wrap text-gray-700 leading-relaxed">
