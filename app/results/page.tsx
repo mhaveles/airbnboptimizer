@@ -9,10 +9,10 @@ import {
   type ErrorInfo
 } from '@/lib/validation';
 
-// Stripe Price IDs
+// Stripe Price IDs (Test Mode)
 const PRICE_IDS = {
-  single: 'price_1SWvtDDMcCJIBpshZhhSXytp',
-  bundle: 'price_1SWvuZDMcCJIBpshWJqUOx6T',
+  single: 'price_1SYxQxDMcCJIBpshnSwSWFTL',
+  bundle: 'price_1SYxRWDMcCJIBpshtfa372Vu',
 };
 
 function ResultsContent() {
