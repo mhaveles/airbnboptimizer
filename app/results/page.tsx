@@ -164,32 +164,57 @@ function ResultsContent() {
   };
 
   const handleCheckout = async (priceId: string, productType: string) => {
+    console.log('=== Frontend: Starting checkout ===');
+    console.log('Price ID:', priceId);
+    console.log('Record ID:', recordId);
+    console.log('Product Type:', productType);
+
+    if (!recordId) {
+      alert('Error: No recordId found. Please try again from the beginning.');
+      return;
+    }
+
     setCheckoutLoading(productType);
 
     try {
+      const payload = {
+        priceId,
+        recordId,
+        email: userEmail,
+      };
+
+      console.log('Sending request to /api/create-checkout with payload:', payload);
+
       const response = await fetch('/api/create-checkout', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          priceId,
-          recordId,
-          email: userEmail,
-        }),
+        body: JSON.stringify(payload),
       });
 
+      console.log('Response status:', response.status);
+
       const data = await response.json();
+      console.log('Response data:', data);
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to create checkout session');
+        const errorMsg = data.message || data.error || 'Failed to create checkout session';
+        console.error('Checkout failed:', errorMsg);
+        console.error('Full error data:', data);
+        alert(`Checkout failed: ${errorMsg}`);
+        throw new Error(errorMsg);
       }
 
       if (data.url) {
+        console.log('Redirecting to Stripe checkout:', data.url);
         window.location.href = data.url;
+      } else {
+        console.error('No URL returned from checkout API');
+        alert('Error: No checkout URL received');
       }
     } catch (error) {
-      console.error('Checkout error:', error);
+      console.error('=== Frontend: Checkout error ===', error);
       trackError('checkout_failed', error instanceof Error ? error.message : 'Unknown error', {
         recordId,
         priceId,
