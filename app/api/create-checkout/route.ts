@@ -17,9 +17,22 @@ export async function POST(request: NextRequest) {
   try {
     console.log('=== Stripe Checkout Request Started ===');
 
+    // Debug: Log all environment variables related to Stripe
+    console.log('Environment check:', {
+      hasStripeSecret: !!process.env.STRIPE_SECRET_KEY,
+      stripeSecretType: typeof process.env.STRIPE_SECRET_KEY,
+      stripeSecretLength: process.env.STRIPE_SECRET_KEY?.length,
+      stripeSecretPreview: process.env.STRIPE_SECRET_KEY
+        ? `${process.env.STRIPE_SECRET_KEY.slice(0, 7)}...${process.env.STRIPE_SECRET_KEY.slice(-4)}`
+        : 'UNDEFINED',
+      allStripeEnvVars: Object.keys(process.env).filter(key => key.includes('STRIPE')),
+      nodeEnv: process.env.NODE_ENV,
+    });
+
     // Check for Stripe secret key
     if (!process.env.STRIPE_SECRET_KEY) {
       console.error('STRIPE_SECRET_KEY is not set in environment variables');
+      console.error('All env vars:', Object.keys(process.env));
       return NextResponse.json(
         { error: 'Stripe is not configured' },
         { status: 500 }
