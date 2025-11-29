@@ -6,10 +6,12 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 function getStripe() {
-  const secretKey = process.env.STRIPE_SECRET_KEY;
+  // SECURITY WARNING: Using NEXT_PUBLIC_ prefix exposes this to client-side
+  // This should be STRIPE_SECRET_KEY (without NEXT_PUBLIC_)
+  const secretKey = process.env.NEXT_PUBLIC_STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY;
 
   if (!secretKey) {
-    throw new Error('STRIPE_SECRET_KEY environment variable is not set');
+    throw new Error('Stripe secret key environment variable is not set');
   }
 
   return new Stripe(secretKey, {
@@ -22,20 +24,23 @@ export async function POST(request: NextRequest) {
     console.log('=== Stripe Checkout Request Started ===');
 
     // Debug: Log all environment variables related to Stripe
+    const stripeSecretKey = process.env.NEXT_PUBLIC_STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY;
     console.log('Environment check:', {
+      hasNextPublicStripeSecret: !!process.env.NEXT_PUBLIC_STRIPE_SECRET_KEY,
       hasStripeSecret: !!process.env.STRIPE_SECRET_KEY,
-      stripeSecretType: typeof process.env.STRIPE_SECRET_KEY,
-      stripeSecretLength: process.env.STRIPE_SECRET_KEY?.length,
-      stripeSecretPreview: process.env.STRIPE_SECRET_KEY
-        ? `${process.env.STRIPE_SECRET_KEY.slice(0, 7)}...${process.env.STRIPE_SECRET_KEY.slice(-4)}`
+      finalKeyType: typeof stripeSecretKey,
+      finalKeyLength: stripeSecretKey?.length,
+      finalKeyPreview: stripeSecretKey
+        ? `${stripeSecretKey.slice(0, 7)}...${stripeSecretKey.slice(-4)}`
         : 'UNDEFINED',
       allStripeEnvVars: Object.keys(process.env).filter(key => key.includes('STRIPE')),
       nodeEnv: process.env.NODE_ENV,
     });
 
     // Check for Stripe secret key
-    if (!process.env.STRIPE_SECRET_KEY) {
-      console.error('STRIPE_SECRET_KEY is not set in environment variables');
+    if (!stripeSecretKey) {
+      console.error('Stripe secret key is not set in environment variables');
+      console.error('Checked: NEXT_PUBLIC_STRIPE_SECRET_KEY and STRIPE_SECRET_KEY');
       console.error('All env vars:', Object.keys(process.env));
       return NextResponse.json(
         { error: 'Stripe is not configured' },
