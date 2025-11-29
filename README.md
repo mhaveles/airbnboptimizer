@@ -9,6 +9,7 @@ Optimize your Airbnb listing to rank higher in search and get more bookings.
 - **Expert Recommendations**: Personalized optimization suggestions via Make.com
 - **Flexible Delivery**: View results on-screen or receive them via email
 - **Privacy-First**: No data storage, anonymous usage option
+- 
 
 ## Tech Stack
 
