@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 
+// Force Node.js runtime (not Edge) to ensure env vars are available
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
 function getStripe() {
   const secretKey = process.env.STRIPE_SECRET_KEY;
 
