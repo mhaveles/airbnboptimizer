@@ -82,6 +82,7 @@ export function validateRecordId(recordId: string | null | undefined): Validatio
 
 /**
  * Validates webhook response has all required fields
+ * Note: Recommendations are now fetched from Airtable, not the webhook response
  */
 export function validateWebhookResponse(data: any): ValidationResult {
   if (!data) {
@@ -114,13 +115,8 @@ export function validateWebhookResponse(data: any): ValidationResult {
     return recordIdValidation;
   }
 
-  // Check for recommendations
-  if (!data.recommendations) {
-    return {
-      isValid: false,
-      error: 'recommendations missing from webhook response',
-    };
-  }
+  // Recommendations are no longer required in webhook response
+  // They will be fetched from Airtable on the results page
 
   return { isValid: true };
 }

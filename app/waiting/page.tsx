@@ -9,7 +9,7 @@ import {
   type ErrorInfo
 } from '@/lib/validation';
 
-const TIMEOUT_MS = 60000; // 60 second timeout
+const TIMEOUT_MS = 120000; // 120 second timeout (Make.com webhook takes ~25 seconds)
 
 function WaitingContent() {
   const router = useRouter();
@@ -41,13 +41,14 @@ function WaitingContent() {
       setError(ERROR_MESSAGES.TIMEOUT);
     }, TIMEOUT_MS);
 
-    // Simulate progress bar (since Make responds synchronously)
+    // Simulate progress bar to show activity while waiting for webhook
+    // Make.com webhook typically takes 24-26 seconds
     const progressInterval = setInterval(() => {
       setProgress((prev) => {
-        if (prev >= 90) return prev; // Stop at 90% until we get response
-        return prev + 10;
+        if (prev >= 85) return prev; // Stop at 85% until we get response
+        return prev + 5; // Slower progress to match ~25 second webhook time
       });
-    }, 3000); // Update every 3 seconds
+    }, 3500); // Update every 3.5 seconds (~24 seconds to reach 85%)
 
     // Call Make.com webhook
     const callMakeWebhook = async () => {
@@ -188,23 +189,16 @@ function WaitingContent() {
           }
         }
 
-        // Validate the webhook response
+        // Validate the webhook response (only requires status and recordId)
         const validation = validateWebhookResponse(data);
         if (!validation.isValid) {
           console.error('Webhook response validation failed:', validation.error);
           trackError('validation_failed', validation.error || 'Unknown validation error', {
             hasStatus: !!data.status,
             hasRecordId: !!(data.recordId || data.record_id),
-            hasRecommendations: !!data.recommendations,
           });
-
-          // If we have recommendations but missing recordId, still proceed but warn
-          if (data.recommendations && !data.recordId) {
-            console.warn('Proceeding without recordId - some features may not work');
-          } else if (!data.recommendations) {
-            setError(ERROR_MESSAGES.MISSING_RECOMMENDATIONS);
-            return;
-          }
+          setError(ERROR_MESSAGES.WEBHOOK_INVALID_RESPONSE);
+          return;
         }
 
         // Complete the progress bar
@@ -212,22 +206,20 @@ function WaitingContent() {
 
         console.log('Preparing to navigate to results page');
         console.log('Data object:', {
-          hasRecommendations: !!data.recommendations,
           hasRecordId: !!data.recordId,
           recordId: data.recordId || '(not present)',
           email: email || '(not provided)'
         });
 
         // Wait a moment to show 100%, then navigate to results
+        // Note: We only pass recordId now - recommendations will be fetched from Airtable
         setTimeout(() => {
           const params = new URLSearchParams({
-            recommendations: data.recommendations || '',
             ...(email && { email }),
             ...(data.recordId && { recordId: data.recordId }),
           });
           console.log('Navigation URL:', `/results?${params.toString()}`);
           console.log('URL params being passed:', {
-            recommendations: data.recommendations ? 'present' : 'missing',
             email: email || 'none',
             recordId: data.recordId || 'none'
           });
@@ -346,7 +338,7 @@ function WaitingContent() {
 
         {/* Estimated Time */}
         <p className="text-xs text-gray-400">
-          This usually takes 30-60 seconds
+          This usually takes 25-35 seconds
         </p>
       </div>
     </div>
