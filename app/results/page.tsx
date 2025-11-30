@@ -24,6 +24,7 @@ function ResultsContent() {
   const [showEmailOption, setShowEmailOption] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
   const [emailError, setEmailError] = useState<string | null>(null);
+  const [emailLoading, setEmailLoading] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
   const [error, setError] = useState<ErrorInfo | null>(null);
@@ -83,17 +84,16 @@ function ResultsContent() {
     const payload = {
       email: userEmail,
       recordId: recordId,
-      email_source: "Results Page",
     };
 
     console.log('Submitting email capture with payload:', payload);
-    console.log('RecordId value:', recordId || '(empty string)');
 
     setEmailError(null);
+    setEmailLoading(true);
 
     try {
-      // Send email and recordId to Make.com webhook to update the Airtable record
-      const response = await fetch('https://hook.us2.make.com/mb8e6o5jacmce62htobb7e81how1ltcu', {
+      // Send email and recordId to our API to update the Airtable record directly
+      const response = await fetch('/api/save-email', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -101,21 +101,24 @@ function ResultsContent() {
         body: JSON.stringify(payload),
       });
 
-      console.log('Email webhook response status:', response.status);
+      const data = await response.json();
+      console.log('Email save response:', response.status, data);
 
       if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
+        throw new Error(data.error || `HTTP ${response.status}`);
       }
 
       setEmailSent(true);
       setShowEmailOption(false);
     } catch (error) {
-      console.error('Error sending email data:', error);
-      trackError('email_webhook_failed', error instanceof Error ? error.message : 'Unknown error', {
+      console.error('Error saving email:', error);
+      trackError('email_save_failed', error instanceof Error ? error.message : 'Unknown error', {
         recordId: recordId
       });
       // Show error but don't block the user
-      setEmailError('Failed to save your email. Please try again.');
+      setEmailError(error instanceof Error ? error.message : 'Failed to save your email. Please try again.');
+    } finally {
+      setEmailLoading(false);
     }
   };
 
@@ -374,9 +377,10 @@ function ResultsContent() {
                 <div className="flex gap-3">
                   <button
                     type="submit"
-                    className="bg-airbnb-red hover:bg-[#E00007] text-white font-semibold py-3 px-6 rounded-lg transition-colors"
+                    disabled={emailLoading}
+                    className="bg-airbnb-red hover:bg-[#E00007] disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold py-3 px-6 rounded-lg transition-colors"
                   >
-                    Send Email
+                    {emailLoading ? 'Saving...' : 'Send Email'}
                   </button>
                   <button
                     type="button"
@@ -384,7 +388,8 @@ function ResultsContent() {
                       setShowEmailOption(false);
                       setEmailError(null);
                     }}
-                    className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-3 px-6 rounded-lg transition-colors"
+                    disabled={emailLoading}
+                    className="bg-gray-200 hover:bg-gray-300 disabled:bg-gray-100 disabled:cursor-not-allowed text-gray-800 font-semibold py-3 px-6 rounded-lg transition-colors"
                   >
                     Cancel
                   </button>
@@ -397,11 +402,11 @@ function ResultsContent() {
         {emailSent && (
           <div className="bg-green-50 border-2 border-green-200 rounded-xl p-6 mb-8">
             <div className="flex items-center gap-3">
-              <span className="text-3xl">✅</span>
+              <span className="text-3xl">✓</span>
               <div>
-                <h4 className="font-bold text-green-900">Email Sent!</h4>
+                <h4 className="font-bold text-green-900">Email saved!</h4>
                 <p className="text-green-700">
-                  Check your inbox at {userEmail}
+                  We&apos;ll send your results to {userEmail}
                 </p>
               </div>
             </div>
