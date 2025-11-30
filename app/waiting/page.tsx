@@ -219,15 +219,14 @@ function WaitingContent() {
         });
 
         // Wait a moment to show 100%, then navigate to results
+        // Note: We only pass recordId now - recommendations will be fetched from Airtable
         setTimeout(() => {
           const params = new URLSearchParams({
-            recommendations: data.recommendations || '',
             ...(email && { email }),
             ...(data.recordId && { recordId: data.recordId }),
           });
           console.log('Navigation URL:', `/results?${params.toString()}`);
           console.log('URL params being passed:', {
-            recommendations: data.recommendations ? 'present' : 'missing',
             email: email || 'none',
             recordId: data.recordId || 'none'
           });
