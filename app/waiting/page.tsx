@@ -9,7 +9,7 @@ import {
   type ErrorInfo
 } from '@/lib/validation';
 
-const TIMEOUT_MS = 60000; // 60 second timeout
+const TIMEOUT_MS = 120000; // 120 second timeout (Make.com webhook takes ~25 seconds)
 
 function WaitingContent() {
   const router = useRouter();
@@ -41,13 +41,14 @@ function WaitingContent() {
       setError(ERROR_MESSAGES.TIMEOUT);
     }, TIMEOUT_MS);
 
-    // Simulate progress bar (since Make responds synchronously)
+    // Simulate progress bar to show activity while waiting for webhook
+    // Make.com webhook typically takes 24-26 seconds
     const progressInterval = setInterval(() => {
       setProgress((prev) => {
-        if (prev >= 90) return prev; // Stop at 90% until we get response
-        return prev + 10;
+        if (prev >= 85) return prev; // Stop at 85% until we get response
+        return prev + 5; // Slower progress to match ~25 second webhook time
       });
-    }, 3000); // Update every 3 seconds
+    }, 3500); // Update every 3.5 seconds (~24 seconds to reach 85%)
 
     // Call Make.com webhook
     const callMakeWebhook = async () => {
@@ -345,7 +346,7 @@ function WaitingContent() {
 
         {/* Estimated Time */}
         <p className="text-xs text-gray-400">
-          This usually takes 30-60 seconds
+          This usually takes 25-35 seconds
         </p>
       </div>
     </div>
