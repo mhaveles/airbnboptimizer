@@ -189,23 +189,16 @@ function WaitingContent() {
           }
         }
 
-        // Validate the webhook response
+        // Validate the webhook response (only requires status and recordId)
         const validation = validateWebhookResponse(data);
         if (!validation.isValid) {
           console.error('Webhook response validation failed:', validation.error);
           trackError('validation_failed', validation.error || 'Unknown validation error', {
             hasStatus: !!data.status,
             hasRecordId: !!(data.recordId || data.record_id),
-            hasRecommendations: !!data.recommendations,
           });
-
-          // If we have recommendations but missing recordId, still proceed but warn
-          if (data.recommendations && !data.recordId) {
-            console.warn('Proceeding without recordId - some features may not work');
-          } else if (!data.recommendations) {
-            setError(ERROR_MESSAGES.MISSING_RECOMMENDATIONS);
-            return;
-          }
+          setError(ERROR_MESSAGES.WEBHOOK_INVALID_RESPONSE);
+          return;
         }
 
         // Complete the progress bar
@@ -213,7 +206,6 @@ function WaitingContent() {
 
         console.log('Preparing to navigate to results page');
         console.log('Data object:', {
-          hasRecommendations: !!data.recommendations,
           hasRecordId: !!data.recordId,
           recordId: data.recordId || '(not present)',
           email: email || '(not provided)'
