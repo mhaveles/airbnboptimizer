@@ -68,11 +68,11 @@ export async function GET(request: NextRequest) {
       const record = await base(tableName).find(recordId);
       console.log('Record found:', record.id);
 
-      // Extract the recommendations field
-      const recommendations = record.get('Recommendations') as string | undefined;
+      // Extract the recommendations field (stored in 'Freemium AI Response' field)
+      const recommendations = record.get('Freemium AI Response') as string | undefined;
 
       if (!recommendations) {
-        console.warn('Record found but no recommendations field');
+        console.warn('Record found but no Freemium AI Response field');
         return NextResponse.json(
           { error: 'No recommendations found for this record' },
           { status: 404 }
