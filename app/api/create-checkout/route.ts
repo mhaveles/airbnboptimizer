@@ -83,6 +83,7 @@ export async function POST(request: NextRequest) {
       metadata: {
         recordId: recordId,
       },
+      expand: ['line_items'],
     };
 
     // Pre-fill email if provided
