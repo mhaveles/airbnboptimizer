@@ -53,7 +53,8 @@ function WaitingContent() {
     // Call Make.com webhook
     const callMakeWebhook = async () => {
       try {
-        const response = await fetch('https://hook.us2.make.com/pveeaemxf16qf49huq98532vegvbu2sn', {
+        const webhookUrl = process.env.NEXT_PUBLIC_MAKE_WEBHOOK_URL || 'https://hook.us2.make.com/cayiub7qq8b6n1tkm95tnv5o10169j3j';
+        const response = await fetch(webhookUrl, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
