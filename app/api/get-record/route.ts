@@ -71,21 +71,30 @@ export async function GET(request: NextRequest) {
       // Extract the recommendations field (stored in 'Freemium AI Response' field)
       const recommendations = record.get('Freemium AI Response') as string | undefined;
 
-      if (!recommendations) {
-        console.warn('Record found but no Freemium AI Response field');
+      // Also extract Premium_Description if it exists
+      const premiumDescription = record.get('Premium_Description') as string | undefined;
+
+      if (!recommendations && !premiumDescription) {
+        console.warn('Record found but no Freemium AI Response or Premium_Description field');
         return NextResponse.json(
-          { error: 'No recommendations found for this record' },
+          { error: 'No content found for this record' },
           { status: 404 }
         );
       }
 
-      console.log('Recommendations found, length:', recommendations.length);
+      console.log('Content found:', {
+        hasRecommendations: !!recommendations,
+        hasPremiumDescription: !!premiumDescription,
+        recommendationsLength: recommendations?.length,
+        premiumDescriptionLength: premiumDescription?.length
+      });
       console.log('=== Get Record Request Completed ===');
 
       return NextResponse.json({
         success: true,
         recordId: record.id,
         recommendations: recommendations,
+        premiumDescription: premiumDescription,
         email: record.get('Email') as string | undefined,
       });
 
