@@ -11,6 +11,7 @@ const MAX_POLLS = TIMEOUT_MS / POLL_INTERVAL; // 20 polls
 function PaymentSuccessContent() {
   const searchParams = useSearchParams();
   const sessionId = searchParams.get('session_id');
+  const recordId = searchParams.get('recordId');
 
   const [premiumDescription, setPremiumDescription] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -18,8 +19,8 @@ function PaymentSuccessContent() {
   const [progress, setProgress] = useState(0);
 
   useEffect(() => {
-    if (!sessionId) {
-      setError('No session ID found. Please try again.');
+    if (!sessionId && !recordId) {
+      setError('No session ID or record ID found. Please try again.');
       setIsLoading(false);
       return;
     }
@@ -51,23 +52,49 @@ function PaymentSuccessContent() {
         pollCount++;
         console.log(`Polling attempt ${pollCount}/${MAX_POLLS}`);
 
-        const response = await fetch(`/api/poll-description?session_id=${encodeURIComponent(sessionId)}`);
-        const data = await response.json();
+        let response;
+        let data;
 
-        console.log('Poll response:', data);
+        // If we have recordId, use /api/get-record (more reliable)
+        // Otherwise fall back to polling by session_id
+        if (recordId) {
+          console.log('Polling with recordId:', recordId);
+          response = await fetch(`/api/get-record?recordId=${encodeURIComponent(recordId)}`);
+          data = await response.json();
 
-        if (data.success && data.hasDescription && data.description) {
-          // Found the description!
-          console.log('Premium description found!');
+          // Check if premiumDescription exists in the response
+          if (data.success && data.premiumDescription) {
+            console.log('Premium description found via recordId!');
 
-          if (intervalId) clearInterval(intervalId);
-          if (timeoutId) clearTimeout(timeoutId);
-          clearInterval(progressInterval);
+            if (intervalId) clearInterval(intervalId);
+            if (timeoutId) clearTimeout(timeoutId);
+            clearInterval(progressInterval);
 
-          setPremiumDescription(data.description);
-          setProgress(100);
-          setIsLoading(false);
-          return;
+            setPremiumDescription(data.premiumDescription);
+            setProgress(100);
+            setIsLoading(false);
+            return;
+          }
+        } else if (sessionId) {
+          console.log('Polling with session_id:', sessionId);
+          response = await fetch(`/api/poll-description?session_id=${encodeURIComponent(sessionId)}`);
+          data = await response.json();
+
+          console.log('Poll response:', data);
+
+          if (data.success && data.hasDescription && data.description) {
+            // Found the description!
+            console.log('Premium description found via session_id!');
+
+            if (intervalId) clearInterval(intervalId);
+            if (timeoutId) clearTimeout(timeoutId);
+            clearInterval(progressInterval);
+
+            setPremiumDescription(data.description);
+            setProgress(100);
+            setIsLoading(false);
+            return;
+          }
         }
 
         // Check if we've reached max polls
@@ -108,7 +135,7 @@ function PaymentSuccessContent() {
       if (timeoutId) clearTimeout(timeoutId);
       clearInterval(progressInterval);
     };
-  }, [sessionId]);
+  }, [sessionId, recordId]);
 
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4">
