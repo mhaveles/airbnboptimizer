@@ -1,10 +1,12 @@
 'use client';
 
-import { Suspense, useState, useEffect, useRef } from 'react';
+import { Suspense, useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 
+const POLL_INTERVAL = 3000; // Poll every 3 seconds
 const TIMEOUT_MS = 60000; // 60 second timeout
+const MAX_POLLS = TIMEOUT_MS / POLL_INTERVAL; // 20 polls
 
 function PaymentSuccessContent() {
   const searchParams = useSearchParams();
@@ -14,7 +16,6 @@ function PaymentSuccessContent() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
-  const abortControllerRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     if (!sessionId) {
@@ -23,114 +24,89 @@ function PaymentSuccessContent() {
       return;
     }
 
-    // Create abort controller for timeout
-    abortControllerRef.current = new AbortController();
+    let pollCount = 0;
+    let intervalId: NodeJS.Timeout | null = null;
+    let timeoutId: NodeJS.Timeout | null = null;
 
-    // Set up timeout
-    const timeoutId = setTimeout(() => {
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
-      setIsLoading(false);
-      setError('timeout');
-    }, TIMEOUT_MS);
-
-    // Progress bar animation
+    // Progress bar animation - increment every 3 seconds to match polling
+    const progressIncrement = 90 / MAX_POLLS; // Reach 90% by max polls
     const progressInterval = setInterval(() => {
       setProgress((prev) => {
-        if (prev >= 90) return prev; // Stop at 90% until we get response
-        return prev + 10; // Increment by 10% every 6 seconds (60s to reach 90%)
+        const newProgress = prev + progressIncrement;
+        return newProgress >= 90 ? 90 : newProgress;
       });
-    }, 6000);
+    }, POLL_INTERVAL);
 
-    const fetchPremiumDescription = async () => {
+    // Set up timeout
+    timeoutId = setTimeout(() => {
+      if (intervalId) clearInterval(intervalId);
+      clearInterval(progressInterval);
+      setIsLoading(false);
+      setError('timeout');
+      setProgress(100);
+    }, TIMEOUT_MS);
+
+    const pollDescription = async () => {
       try {
-        console.log('Calling Make.com webhook with session_id:', sessionId);
+        pollCount++;
+        console.log(`Polling attempt ${pollCount}/${MAX_POLLS}`);
 
-        // Call Make.com webhook with the session_id
-        const webhookUrl = process.env.NEXT_PUBLIC_MAKE_WEBHOOK_URL || 'https://hook.us2.make.com/cayiub7qq8b6n1tkm95tnv5o10169j3j';
-        const response = await fetch(webhookUrl, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            stripe_session_id: sessionId,
-          }),
-          signal: abortControllerRef.current?.signal,
-        });
-
-        clearTimeout(timeoutId);
-        clearInterval(progressInterval);
-
-        if (!response.ok) {
-          console.error('Webhook HTTP error:', response.status);
-          throw new Error('Failed to process your payment');
-        }
-
+        const response = await fetch(`/api/poll-description?session_id=${encodeURIComponent(sessionId)}`);
         const data = await response.json();
-        console.log('Webhook response:', data);
 
-        if (!data.success || !data.record_id) {
-          console.error('Invalid webhook response:', data);
-          throw new Error('Invalid response from server');
-        }
+        console.log('Poll response:', data);
 
-        // Update progress to show we got the record_id
-        setProgress(95);
+        if (data.success && data.hasDescription && data.description) {
+          // Found the description!
+          console.log('Premium description found!');
 
-        // Now fetch the Premium_Description from Airtable using the record_id
-        console.log('Fetching premium description for record:', data.record_id);
-        const recordResponse = await fetch(`/api/get-record?recordId=${data.record_id}`);
-        const recordData = await recordResponse.json();
+          if (intervalId) clearInterval(intervalId);
+          if (timeoutId) clearTimeout(timeoutId);
+          clearInterval(progressInterval);
 
-        console.log('Record data:', recordData);
-
-        if (!recordResponse.ok) {
-          console.error('Failed to fetch record:', recordData);
-          throw new Error(recordData.error || 'Failed to fetch your description');
-        }
-
-        if (!recordData.premiumDescription) {
-          console.error('No premium description in record');
-          setError('Your description is being generated. Please check your email.');
-          setIsLoading(false);
+          setPremiumDescription(data.description);
           setProgress(100);
+          setIsLoading(false);
           return;
         }
 
-        // Success! Show the description
-        setPremiumDescription(recordData.premiumDescription);
-        setProgress(100);
-        setIsLoading(false);
+        // Check if we've reached max polls
+        if (pollCount >= MAX_POLLS) {
+          console.log('Max polls reached');
+          if (intervalId) clearInterval(intervalId);
+          if (timeoutId) clearTimeout(timeoutId);
+          clearInterval(progressInterval);
+          setIsLoading(false);
+          setError('timeout');
+          setProgress(100);
+        }
 
       } catch (err) {
-        clearInterval(progressInterval);
-        clearTimeout(timeoutId);
+        console.error('Error polling for description:', err);
 
-        // Handle abort (timeout)
-        if (err instanceof Error && err.name === 'AbortError') {
-          console.log('Request timed out');
-          setError('timeout');
+        // Check if we've reached max polls
+        if (pollCount >= MAX_POLLS) {
+          if (intervalId) clearInterval(intervalId);
+          if (timeoutId) clearTimeout(timeoutId);
+          clearInterval(progressInterval);
           setIsLoading(false);
-          return;
+          setError('timeout');
+          setProgress(100);
         }
-
-        console.error('Error fetching premium description:', err);
-        const errorMessage = err instanceof Error ? err.message : 'An error occurred';
-        setError(errorMessage);
-        setIsLoading(false);
       }
     };
 
-    fetchPremiumDescription();
+    // Start polling immediately
+    pollDescription();
 
+    // Set up interval for subsequent polls
+    intervalId = setInterval(pollDescription, POLL_INTERVAL);
+
+    // Cleanup on unmount
     return () => {
+      if (intervalId) clearInterval(intervalId);
+      if (timeoutId) clearTimeout(timeoutId);
       clearInterval(progressInterval);
-      clearTimeout(timeoutId);
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
     };
   }, [sessionId]);
 
@@ -170,7 +146,7 @@ function PaymentSuccessContent() {
 
               {/* Progress Percentage */}
               <p className="text-sm text-gray-500 mb-8">
-                {progress}% complete
+                {Math.round(progress)}% complete
               </p>
             </>
           )}
@@ -196,28 +172,27 @@ function PaymentSuccessContent() {
             </div>
           )}
 
-          {/* Error Messages */}
-          {error && !premiumDescription && (
-            <div className="mb-8">
-              {error === 'timeout' ? (
-                <div className="bg-yellow-50 border-2 border-yellow-200 rounded-lg p-6">
-                  <p className="text-yellow-900 text-base font-medium mb-2">
-                    Your description is taking a bit longer than usual.
-                  </p>
-                  <p className="text-yellow-800 text-sm">
-                    We&apos;ll email it to you within 15 minutes.
-                  </p>
-                </div>
-              ) : (
-                <div className="bg-red-50 border-2 border-red-200 rounded-lg p-6">
-                  <p className="text-red-900 text-base font-medium mb-2">
-                    {error}
-                  </p>
-                  <p className="text-red-800 text-sm">
-                    We&apos;ll email your description to you shortly.
-                  </p>
-                </div>
-              )}
+          {/* Timeout Message */}
+          {error === 'timeout' && !premiumDescription && (
+            <div className="bg-yellow-50 border-2 border-yellow-200 rounded-lg p-6 mb-8">
+              <p className="text-yellow-900 text-base font-medium mb-2">
+                Your description is taking a bit longer than usual.
+              </p>
+              <p className="text-yellow-800 text-sm">
+                We&apos;ll email it to you within 15 minutes.
+              </p>
+            </div>
+          )}
+
+          {/* Other Errors */}
+          {error && error !== 'timeout' && !premiumDescription && (
+            <div className="bg-red-50 border-2 border-red-200 rounded-lg p-6 mb-8">
+              <p className="text-red-900 text-base font-medium mb-2">
+                {error}
+              </p>
+              <p className="text-red-800 text-sm">
+                We&apos;ll email your description to you shortly.
+              </p>
             </div>
           )}
 
