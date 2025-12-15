@@ -100,9 +100,7 @@ export async function POST(request: NextRequest) {
     // Update the record with the email
     try {
       const updatedRecord = await base(tableName).update(recordId, {
-        Email: email,
-        'Email Source': 'Results Page',
-        'Email Captured At': new Date().toISOString(),
+        email: email,
       });
 
       console.log('Email saved successfully for record:', updatedRecord.id);

@@ -95,7 +95,7 @@ export async function GET(request: NextRequest) {
         recordId: record.id,
         recommendations: recommendations,
         premiumDescription: premiumDescription,
-        email: record.get('Email') as string | undefined,
+        email: record.get('email') as string | undefined,
       });
 
     } catch (error) {
