@@ -71,11 +71,11 @@ export async function GET(request: NextRequest) {
       // Extract the recommendations field (stored in 'Freemium AI Response' field)
       const recommendations = record.get('Freemium AI Response') as string | undefined;
 
-      // Also extract Premium_Description if it exists
-      const premiumDescription = record.get('Premium_Description') as string | undefined;
+      // Also extract Paid Description if it exists
+      const premiumDescription = record.get('Paid Description') as string | undefined;
 
       if (!recommendations && !premiumDescription) {
-        console.warn('Record found but no Freemium AI Response or Premium_Description field');
+        console.warn('Record found but no Freemium AI Response or Paid Description field');
         return NextResponse.json(
           { error: 'No content found for this record' },
           { status: 404 }

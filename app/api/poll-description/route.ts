@@ -72,11 +72,11 @@ export async function GET(request: NextRequest) {
       const record = records[0];
       console.log('Record found:', record.id);
 
-      // Extract the Premium_Description field
-      const premiumDescription = record.get('Premium_Description') as string | undefined;
+      // Extract the Paid Description field
+      const premiumDescription = record.get('Paid Description') as string | undefined;
 
       if (!premiumDescription) {
-        console.log('Record found but no Premium_Description yet');
+        console.log('Record found but no Paid Description yet');
         return NextResponse.json({
           success: false,
           found: true,
