@@ -25,6 +25,7 @@ function ResultsContent() {
   const [emailSent, setEmailSent] = useState(false);
   const [emailError, setEmailError] = useState<string | null>(null);
   const [emailLoading, setEmailLoading] = useState(false);
+  const [emailSaved, setEmailSaved] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
   const [error, setError] = useState<ErrorInfo | null>(null);
@@ -108,6 +109,64 @@ function ResultsContent() {
       setIsLoadingRecommendations(false);
     }
   }, [searchParams, router, fetchRecommendations]);
+
+  const handleEmailChange = async (email: string) => {
+    setUserEmail(email);
+    setEmailError(null);
+
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setEmailSaved(false);
+      return;
+    }
+
+    // Validate recordId before sending
+    if (!recordId) {
+      trackError('email_submit_no_recordId', 'Attempted email submit without recordId');
+      setEmailError('Unable to save your email. Please try again from the beginning.');
+      return;
+    }
+
+    const payload = {
+      email: email,
+      recordId: recordId,
+    };
+
+    console.log('Auto-saving email with payload:', payload);
+
+    setEmailLoading(true);
+
+    try {
+      // Send email and recordId to our API to update the Airtable record directly
+      const response = await fetch('/api/save-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await response.json();
+      console.log('Email save response:', response.status, data);
+
+      if (!response.ok) {
+        throw new Error(data.error || `HTTP ${response.status}`);
+      }
+
+      setEmailSaved(true);
+      setEmailSent(true);
+    } catch (error) {
+      console.error('Error saving email:', error);
+      trackError('email_save_failed', error instanceof Error ? error.message : 'Unknown error', {
+        recordId: recordId
+      });
+      setEmailError(error instanceof Error ? error.message : 'Failed to save your email. Please try again.');
+      setEmailSaved(false);
+    } finally {
+      setEmailLoading(false);
+    }
+  };
 
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -331,6 +390,41 @@ function ResultsContent() {
           </div>
         </div>
 
+        {/* Email Input Section */}
+        <div className="bg-white rounded-xl shadow-lg p-8 mb-8">
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">
+            Enter Your Email to Purchase
+          </h2>
+          <p className="text-gray-600 mb-4">
+            We need your email to send your optimized description and receipt.
+          </p>
+          <div className="space-y-3">
+            <input
+              type="email"
+              value={userEmail}
+              onChange={(e) => handleEmailChange(e.target.value)}
+              placeholder="your@email.com"
+              className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-airbnb-red transition-colors"
+              required
+            />
+            {emailLoading && (
+              <div className="flex items-center gap-2 text-gray-600">
+                <span className="animate-pulse">💾</span>
+                <span>Saving email...</span>
+              </div>
+            )}
+            {emailSaved && !emailLoading && (
+              <div className="flex items-center gap-2 text-green-600">
+                <span>✓</span>
+                <span>Email saved! You can now purchase below.</span>
+              </div>
+            )}
+            {emailError && (
+              <p className="text-red-500 text-sm">{emailError}</p>
+            )}
+          </div>
+        </div>
+
         {/* Premium Purchase Section */}
         <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl shadow-lg p-8 mb-8 text-white">
           <div className="text-center mb-6">
@@ -354,10 +448,10 @@ function ResultsContent() {
               </ul>
               <button
                 onClick={() => handleCheckout(PRICE_IDS.single, 'single')}
-                disabled={checkoutLoading !== null}
-                className="w-full bg-airbnb-red hover:bg-[#E00007] disabled:bg-gray-500 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
+                disabled={!emailSaved || checkoutLoading !== null}
+                className="w-full bg-airbnb-red hover:bg-[#E00007] disabled:bg-gray-500 disabled:cursor-not-allowed text-white font-semibold py-3 px-6 rounded-lg transition-colors"
               >
-                {checkoutLoading === 'single' ? 'Loading...' : 'Buy Full Description - $29'}
+                {checkoutLoading === 'single' ? 'Loading...' : !emailSaved ? 'Enter Email Above' : 'Buy Full Description - $29'}
               </button>
             </div>
 
@@ -378,10 +472,10 @@ function ResultsContent() {
               </ul>
               <button
                 onClick={() => handleCheckout(PRICE_IDS.bundle, 'bundle')}
-                disabled={checkoutLoading !== null}
-                className="w-full bg-airbnb-red hover:bg-[#E00007] disabled:bg-gray-500 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
+                disabled={!emailSaved || checkoutLoading !== null}
+                className="w-full bg-airbnb-red hover:bg-[#E00007] disabled:bg-gray-500 disabled:cursor-not-allowed text-white font-semibold py-3 px-6 rounded-lg transition-colors"
               >
-                {checkoutLoading === 'bundle' ? 'Loading...' : 'Buy 3-Pack Bundle - $69'}
+                {checkoutLoading === 'bundle' ? 'Loading...' : !emailSaved ? 'Enter Email Above' : 'Buy 3-Pack Bundle - $69'}
               </button>
             </div>
           </div>
