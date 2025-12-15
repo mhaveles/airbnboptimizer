@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, Suspense, useCallback } from 'react';
+import { useEffect, useState, Suspense, useCallback, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
   validateRecordId,
@@ -31,6 +31,7 @@ function ResultsContent() {
   const [error, setError] = useState<ErrorInfo | null>(null);
   const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
   const [isLoadingRecommendations, setIsLoadingRecommendations] = useState(true);
+  const emailSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const fetchRecommendations = useCallback(async (recId: string) => {
     try {
@@ -110,17 +111,17 @@ function ResultsContent() {
     }
   }, [searchParams, router, fetchRecommendations]);
 
-  const handleEmailChange = async (email: string) => {
-    setUserEmail(email);
-    setEmailError(null);
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (emailSaveTimeoutRef.current) {
+        clearTimeout(emailSaveTimeoutRef.current);
+      }
+    };
+  }, []);
 
-    // Basic email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      setEmailSaved(false);
-      return;
-    }
-
+  // Function to actually save the email to Airtable
+  const saveEmailToAirtable = useCallback(async (email: string) => {
     // Validate recordId before sending
     if (!recordId) {
       trackError('email_submit_no_recordId', 'Attempted email submit without recordId');
@@ -166,6 +167,31 @@ function ResultsContent() {
     } finally {
       setEmailLoading(false);
     }
+  }, [recordId]);
+
+  // Debounced email change handler
+  const handleEmailChange = (email: string) => {
+    // Update email state immediately for responsive UI
+    setUserEmail(email);
+    setEmailError(null);
+    setEmailSaved(false);
+
+    // Clear any existing timeout
+    if (emailSaveTimeoutRef.current) {
+      clearTimeout(emailSaveTimeoutRef.current);
+    }
+
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      // Don't save if email is invalid
+      return;
+    }
+
+    // Debounce the save - only save after user stops typing for 500ms
+    emailSaveTimeoutRef.current = setTimeout(() => {
+      saveEmailToAirtable(email);
+    }, 500);
   };
 
   const handleEmailSubmit = async (e: React.FormEvent) => {
