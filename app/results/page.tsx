@@ -32,6 +32,7 @@ function ResultsContent() {
   const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
   const [isLoadingRecommendations, setIsLoadingRecommendations] = useState(true);
   const emailSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const hasInitialized = useRef(false);
 
   const fetchRecommendations = useCallback(async (recId: string) => {
     try {
@@ -53,9 +54,9 @@ function ResultsContent() {
 
       setRecommendations(data.recommendations);
 
-      // If email was returned from Airtable and not in URL, set it
-      if (data.email && !userEmail) {
-        setUserEmail(data.email);
+      // If email was returned from Airtable, set it
+      if (data.email) {
+        setUserEmail(prevEmail => prevEmail || data.email);
       }
 
       setIsLoadingRecommendations(false);
@@ -71,9 +72,13 @@ function ResultsContent() {
       });
       setIsLoadingRecommendations(false);
     }
-  }, [userEmail]);
+  }, []);
 
   useEffect(() => {
+    // Only run initialization once
+    if (hasInitialized.current) return;
+    hasInitialized.current = true;
+
     const email = searchParams.get('email');
     const recId = searchParams.get('recordId');
 
@@ -109,7 +114,7 @@ function ResultsContent() {
       setError(ERROR_MESSAGES.MISSING_RECORD_ID);
       setIsLoadingRecommendations(false);
     }
-  }, [searchParams, router, fetchRecommendations]);
+  }, [searchParams, fetchRecommendations]);
 
   // Cleanup timeout on unmount
   useEffect(() => {
