@@ -20,7 +20,7 @@ This PR replaces the unreliable Make.com webhook for email capture with a direct
 ### 3. Increased Webhook Timeout
 - **Timeout**: Increased from 60s to 120s to accommodate Make.com webhook (~25 seconds)
 - **Progress Bar**: Adjusted timing to better match actual webhook duration
-- **UX**: Updated estimated time message to 25-35 seconds
+- **UX**: Updated estimated time message to 45-60 seconds
 
 ### 4. Simplified Webhook Response
 - **Removed**: `recommendations` field from webhook response validation

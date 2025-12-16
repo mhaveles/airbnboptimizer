@@ -339,7 +339,7 @@ function WaitingContent() {
 
         {/* Estimated Time */}
         <p className="text-xs text-gray-400">
-          This usually takes 25-35 seconds
+          This usually takes 45-60 seconds
         </p>
       </div>
     </div>
