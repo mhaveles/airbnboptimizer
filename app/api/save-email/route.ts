@@ -99,8 +99,14 @@ export async function POST(request: NextRequest) {
 
     // Update the record with the email
     try {
+      console.log('Attempting to update Airtable record with email:', {
+        recordId,
+        email,
+        fieldName: 'Email'
+      });
+
       const updatedRecord = await base(tableName).update(recordId, {
-        email: email,
+        Email: email,
       });
 
       console.log('Email saved successfully for record:', updatedRecord.id);
@@ -111,12 +117,21 @@ export async function POST(request: NextRequest) {
         message: 'Email saved successfully'
       });
     } catch (error) {
-      console.error('Failed to update record:', error);
+      console.error('Failed to update record with email');
+      console.error('Error details:', {
+        type: error instanceof Error ? error.constructor.name : typeof error,
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+        fullError: JSON.stringify(error, null, 2)
+      });
 
       // Check if it's a field error (field doesn't exist)
       if (error instanceof Error && error.message.includes('Unknown field')) {
         return NextResponse.json(
-          { error: 'Email field not configured in Airtable. Please contact support.' },
+          {
+            error: 'Email field not configured in Airtable. Please contact support.',
+            details: error.message
+          },
           { status: 500 }
         );
       }
@@ -127,11 +142,16 @@ export async function POST(request: NextRequest) {
     console.error('=== Save Email Error ===');
     console.error('Error type:', error instanceof Error ? error.constructor.name : typeof error);
     console.error('Error message:', error instanceof Error ? error.message : String(error));
+    console.error('Full error object:', error);
+    if (error instanceof Error && error.stack) {
+      console.error('Stack trace:', error.stack);
+    }
 
     return NextResponse.json(
       {
         error: 'Failed to save email',
         message: error instanceof Error ? error.message : 'Unknown error',
+        details: error instanceof Error ? error.stack : String(error),
       },
       { status: 500 }
     );
