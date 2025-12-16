@@ -54,9 +54,15 @@ function ResultsContent() {
 
       setRecommendations(data.recommendations);
 
-      // If email was returned from Airtable, set it
+      // If email was returned from Airtable, set it and mark as saved
+      // (it's already in Airtable, so we don't need to save it again)
       if (data.email) {
-        setUserEmail(prevEmail => prevEmail || data.email);
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (emailRegex.test(data.email)) {
+          setUserEmail(prevEmail => prevEmail || data.email);
+          setEmailSaved(true);
+          console.log('Email loaded from Airtable and marked as saved:', data.email);
+        }
       }
 
       setIsLoadingRecommendations(false);
@@ -101,7 +107,15 @@ function ResultsContent() {
 
     // Set email and recordId from URL params
     if (email) {
-      setUserEmail(email);
+      // If email came from URL, it was already saved to Airtable during the homepage flow
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (emailRegex.test(email)) {
+        setUserEmail(email);
+        setEmailSaved(true);
+        console.log('Email loaded from URL params and marked as saved:', email);
+      } else {
+        setUserEmail(email);
+      }
     }
     if (recId) {
       setRecordId(recId);
