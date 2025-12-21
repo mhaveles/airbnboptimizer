@@ -228,10 +228,10 @@ function PaymentSuccessContent() {
             <p className="text-blue-800 text-sm">
               <strong>Bought the 3-pack?</strong> Email your other listing URLs to{' '}
               <a
-                href="mailto:support@airbnboptimizer.com"
+                href="mailto:airbnboptimizerr@gmail.com"
                 className="text-airbnb-red hover:underline font-medium"
               >
-                support@airbnboptimizer.com
+                airbnboptimizerr@gmail.com
               </a>{' '}
               and we&apos;ll send your descriptions within 24 hours.
             </p>
@@ -257,10 +257,10 @@ function PaymentSuccessContent() {
         <p className="text-center text-sm text-gray-500 mt-8">
           Questions? Contact us at{' '}
           <a
-            href="mailto:support@airbnboptimizer.com"
+            href="mailto:airbnboptimizerr@gmail.com"
             className="text-airbnb-red hover:underline"
           >
-            support@airbnboptimizer.com
+            airbnboptimizerr@gmail.com
           </a>
         </p>
       </div>
