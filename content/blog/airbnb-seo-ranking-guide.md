@@ -143,7 +143,7 @@ If you can handle it operationally, I've found flexibility helps.
 
 ## 8. Booking Rate Is the Signal That Ties It All Together
 
-Booking rate = bookings ÷ views.
+Booking rate = bookings / views.
 
 This is where everything compounds.
 
