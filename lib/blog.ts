@@ -89,11 +89,17 @@ export async function getPostBySlug(slug: string): Promise<BlogPost | null> {
 export async function getAllSlugs(): Promise<string[]> {
   // Ensure directory exists
   if (!fs.existsSync(postsDirectory)) {
+    console.error('[Blog] Posts directory does not exist:', postsDirectory);
     return [];
   }
 
   const fileNames = fs.readdirSync(postsDirectory);
-  return fileNames
+  console.error('[Blog] Files found in', postsDirectory, ':', fileNames);
+
+  const slugs = fileNames
     .filter(fileName => fileName.endsWith('.md'))
     .map(fileName => fileName.replace(/\.md$/, ''));
+
+  console.error('[Blog] Slugs generated:', slugs);
+  return slugs;
 }
