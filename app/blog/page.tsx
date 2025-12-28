@@ -17,25 +17,25 @@ export default async function BlogPage() {
 
   return (
     <main className="min-h-screen bg-white">
-      <div className="max-w-4xl mx-auto px-4 py-16">
-        <header className="mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">Blog</h1>
-          <p className="text-lg text-gray-600">
+      <div className="w-full max-w-[800px] mx-auto px-6 sm:px-8 py-16">
+        <header className="mb-16">
+          <h1 className="text-5xl font-bold text-gray-900 mb-4">Blog</h1>
+          <p className="text-xl text-gray-700 leading-relaxed">
             Tips, guides, and insights for optimizing your Airbnb listing
           </p>
         </header>
 
         {posts.length === 0 ? (
-          <p className="text-gray-600">No blog posts yet. Check back soon!</p>
+          <p className="text-gray-700 text-lg">No blog posts yet. Check back soon!</p>
         ) : (
-          <div className="space-y-8">
+          <div className="space-y-12">
             {posts.map((post) => (
-              <article key={post.slug} className="border-b border-gray-200 pb-8 last:border-b-0">
-                <Link href={`/blog/${post.slug}`} className="group">
-                  <h2 className="text-2xl font-bold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">
+              <article key={post.slug} className="border-b border-gray-200 pb-12 last:border-b-0">
+                <Link href={`/blog/${post.slug}`} className="group block">
+                  <h2 className="text-3xl font-bold text-gray-900 mb-3 group-hover:text-[#0066cc] transition-colors">
                     {post.title}
                   </h2>
-                  <div className="flex items-center gap-4 text-sm text-gray-500 mb-3">
+                  <div className="flex items-center gap-4 text-sm text-gray-500 mb-4">
                     <time dateTime={post.date}>
                       {new Date(post.date).toLocaleDateString('en-US', {
                         year: 'numeric',
@@ -45,15 +45,15 @@ export default async function BlogPage() {
                     </time>
                     <span>by {post.author}</span>
                   </div>
-                  <p className="text-gray-700 leading-relaxed">{post.description}</p>
+                  <p className="text-gray-800 text-[17px] leading-[1.7]">{post.description}</p>
                 </Link>
               </article>
             ))}
           </div>
         )}
 
-        <div className="mt-12 pt-8 border-t border-gray-200">
-          <Link href="/" className="text-blue-600 hover:text-blue-700 font-medium">
+        <div className="mt-16 pt-8 border-t border-gray-200">
+          <Link href="/" className="text-[#0066cc] hover:underline font-medium">
             ← Back to Home
           </Link>
         </div>

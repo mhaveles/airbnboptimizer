@@ -93,10 +93,10 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
       )}
 
       <article className="min-h-screen bg-white">
-        <div className="max-w-3xl mx-auto px-4 py-16">
+        <div className="w-full max-w-[800px] mx-auto px-6 sm:px-8 py-16">
           {/* Article Header */}
-          <header className="mb-8">
-            <h1 className="text-4xl font-bold text-gray-900 mb-4">{post.title}</h1>
+          <header className="mb-12">
+            <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 mb-4 leading-tight">{post.title}</h1>
             <div className="flex items-center gap-4 text-sm text-gray-500 mb-4">
               <time dateTime={post.date}>
                 {new Date(post.date).toLocaleDateString('en-US', {
@@ -107,35 +107,36 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
               </time>
               <span>by {post.author}</span>
             </div>
-            <p className="text-lg text-gray-700">{post.description}</p>
+            <p className="text-xl text-gray-700 leading-relaxed">{post.description}</p>
           </header>
 
           {/* Article Content */}
           <section
             className="prose prose-lg max-w-none
-              prose-headings:font-bold prose-headings:text-gray-900
-              prose-h2:text-3xl prose-h2:mt-12 prose-h2:mb-6 prose-h2:leading-tight
-              prose-h3:text-2xl prose-h3:mt-10 prose-h3:mb-4 prose-h3:leading-snug
-              prose-p:text-gray-700 prose-p:leading-relaxed prose-p:mb-6
-              prose-strong:text-gray-900 prose-strong:font-semibold
-              prose-a:text-blue-600 prose-a:font-medium prose-a:no-underline hover:prose-a:underline
-              prose-ul:my-6 prose-ul:space-y-2
-              prose-ol:my-6 prose-ol:space-y-2
-              prose-li:text-gray-700 prose-li:leading-relaxed
+              prose-headings:text-gray-900
+              prose-h2:text-4xl prose-h2:font-bold prose-h2:mt-10 prose-h2:mb-6 prose-h2:leading-tight
+              prose-h3:text-2xl prose-h3:font-medium prose-h3:mt-8 prose-h3:mb-4 prose-h3:leading-snug
+              prose-p:text-gray-800 prose-p:text-[17px] prose-p:leading-[1.7] prose-p:mb-6
+              prose-strong:text-gray-900 prose-strong:font-bold
+              prose-a:text-[#0066cc] prose-a:no-underline hover:prose-a:underline
+              prose-ul:my-6 prose-ul:space-y-3 prose-ul:pl-6
+              prose-ol:my-6 prose-ol:space-y-3 prose-ol:pl-6
+              prose-li:text-gray-800 prose-li:text-[17px] prose-li:leading-[1.7] prose-li:pl-2
               prose-code:text-blue-600 prose-code:bg-blue-50 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded
+              prose-hr:hidden
               first:prose-h2:mt-0"
             dangerouslySetInnerHTML={{ __html: post.content }}
           />
 
           {/* FAQ Section */}
           {post.faq && post.faq.length > 0 && (
-            <section className="mt-16 pt-12 border-t-2 border-gray-200">
-              <h2 className="text-3xl font-bold text-gray-900 mb-8">Frequently Asked Questions</h2>
-              <div className="space-y-8">
+            <section className="mt-20 pt-12">
+              <h2 className="text-4xl font-bold text-gray-900 mb-10">Frequently Asked Questions</h2>
+              <div className="space-y-6">
                 {post.faq.map((item, index) => (
-                  <div key={index} className="bg-gray-50 rounded-lg p-6 border-l-4 border-blue-600">
+                  <div key={index} className="bg-gray-50 rounded-lg p-6 border-l-4 border-[#FF5A5F]">
                     <h3 className="text-xl font-semibold text-gray-900 mb-3">{item.question}</h3>
-                    <p className="text-gray-700 leading-relaxed text-lg">{item.answer}</p>
+                    <p className="text-gray-800 leading-relaxed text-[17px]">{item.answer}</p>
                   </div>
                 ))}
               </div>
@@ -143,8 +144,8 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
           )}
 
           {/* Back Link */}
-          <div className="mt-12 pt-8 border-t border-gray-200">
-            <Link href="/blog" className="text-blue-600 hover:text-blue-700 font-medium">
+          <div className="mt-16 pt-8 border-t border-gray-200">
+            <Link href="/blog" className="text-[#0066cc] hover:underline font-medium">
               ← Back to Blog
             </Link>
           </div>
