@@ -31,8 +31,8 @@ export default async function BlogPage() {
           <div className="space-y-12">
             {posts.map((post) => (
               <article key={post.slug} className="border-b border-gray-200 pb-12 last:border-b-0">
-                <Link href={`/blog/${post.slug}`} className="group block">
-                  <h2 className="text-3xl font-bold text-gray-900 mb-3 group-hover:text-[#0066cc] transition-colors">
+                <Link href={`/blog/${post.slug}`} className="group block no-underline">
+                  <h2 className="text-3xl font-bold text-gray-900 mb-3 group-hover:!text-[#0066cc] transition-colors">
                     {post.title}
                   </h2>
                   <div className="flex items-center gap-4 text-sm text-gray-500 mb-4">
@@ -53,7 +53,7 @@ export default async function BlogPage() {
         )}
 
         <div className="mt-16 pt-8 border-t border-gray-200">
-          <Link href="/" className="text-[#0066cc] hover:underline font-medium">
+          <Link href="/" className="!text-[#0066cc] hover:!underline font-medium no-underline">
             ← Back to Home
           </Link>
         </div>
