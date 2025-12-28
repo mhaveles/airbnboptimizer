@@ -112,19 +112,30 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
 
           {/* Article Content */}
           <section
-            className="prose prose-lg max-w-none prose-headings:font-bold prose-h2:text-2xl prose-h2:mt-8 prose-h2:mb-4 prose-h3:text-xl prose-h3:mt-6 prose-h3:mb-3 prose-p:text-gray-700 prose-p:leading-relaxed prose-a:text-blue-600 prose-a:no-underline hover:prose-a:underline prose-ul:my-4 prose-li:text-gray-700"
+            className="prose prose-lg max-w-none
+              prose-headings:font-bold prose-headings:text-gray-900
+              prose-h2:text-3xl prose-h2:mt-12 prose-h2:mb-6 prose-h2:leading-tight
+              prose-h3:text-2xl prose-h3:mt-10 prose-h3:mb-4 prose-h3:leading-snug
+              prose-p:text-gray-700 prose-p:leading-relaxed prose-p:mb-6
+              prose-strong:text-gray-900 prose-strong:font-semibold
+              prose-a:text-blue-600 prose-a:font-medium prose-a:no-underline hover:prose-a:underline
+              prose-ul:my-6 prose-ul:space-y-2
+              prose-ol:my-6 prose-ol:space-y-2
+              prose-li:text-gray-700 prose-li:leading-relaxed
+              prose-code:text-blue-600 prose-code:bg-blue-50 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded
+              first:prose-h2:mt-0"
             dangerouslySetInnerHTML={{ __html: post.content }}
           />
 
           {/* FAQ Section */}
           {post.faq && post.faq.length > 0 && (
-            <section className="mt-12 pt-8 border-t border-gray-200">
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">Frequently Asked Questions</h2>
-              <div className="space-y-6">
+            <section className="mt-16 pt-12 border-t-2 border-gray-200">
+              <h2 className="text-3xl font-bold text-gray-900 mb-8">Frequently Asked Questions</h2>
+              <div className="space-y-8">
                 {post.faq.map((item, index) => (
-                  <div key={index} className="border-l-4 border-blue-600 pl-4">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">{item.question}</h3>
-                    <p className="text-gray-700 leading-relaxed">{item.answer}</p>
+                  <div key={index} className="bg-gray-50 rounded-lg p-6 border-l-4 border-blue-600">
+                    <h3 className="text-xl font-semibold text-gray-900 mb-3">{item.question}</h3>
+                    <p className="text-gray-700 leading-relaxed text-lg">{item.answer}</p>
                   </div>
                 ))}
               </div>
