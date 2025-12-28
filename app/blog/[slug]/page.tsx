@@ -114,16 +114,16 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
           <section
             className="prose prose-lg max-w-none
               prose-headings:text-gray-900
-              prose-h2:text-4xl prose-h2:font-bold prose-h2:mt-10 prose-h2:mb-6 prose-h2:leading-tight
+              prose-h2:text-4xl prose-h2:font-bold prose-h2:mt-10 prose-h2:mb-6 prose-h2:leading-tight prose-h2:text-[#FF5A5F] prose-h2:border-b-2 prose-h2:border-[#FF5A5F]/20 prose-h2:pb-3
               prose-h3:text-2xl prose-h3:font-medium prose-h3:mt-8 prose-h3:mb-4 prose-h3:leading-snug
               prose-p:text-gray-800 prose-p:text-[17px] prose-p:leading-[1.7] prose-p:mb-6
               prose-strong:text-gray-900 prose-strong:font-bold
-              prose-a:text-[#0066cc] prose-a:no-underline hover:prose-a:underline
-              prose-ul:my-6 prose-ul:space-y-3 prose-ul:pl-6
-              prose-ol:my-6 prose-ol:space-y-3 prose-ol:pl-6
-              prose-li:text-gray-800 prose-li:text-[17px] prose-li:leading-[1.7] prose-li:pl-2
+              prose-a:!text-[#0066cc] prose-a:!no-underline hover:prose-a:!underline
+              prose-ul:my-6 prose-ul:list-disc prose-ul:pl-8 prose-ul:space-y-2
+              prose-ol:my-6 prose-ol:list-decimal prose-ol:pl-8 prose-ol:space-y-2
+              prose-li:text-gray-800 prose-li:text-[17px] prose-li:leading-[1.7] prose-li:marker:text-[#FF5A5F]
               prose-code:text-blue-600 prose-code:bg-blue-50 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded
-              prose-hr:hidden
+              prose-hr:border-0 prose-hr:h-0 prose-hr:m-0
               first:prose-h2:mt-0"
             dangerouslySetInnerHTML={{ __html: post.content }}
           />
@@ -145,7 +145,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
 
           {/* Back Link */}
           <div className="mt-16 pt-8 border-t border-gray-200">
-            <Link href="/blog" className="text-[#0066cc] hover:underline font-medium">
+            <Link href="/blog" className="!text-[#0066cc] hover:!underline font-medium no-underline">
               ← Back to Blog
             </Link>
           </div>
