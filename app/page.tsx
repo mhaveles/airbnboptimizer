@@ -145,6 +145,12 @@ function HomeContent() {
       // Update the input field with the normalized URL so user can see it
       setAirbnbUrl(normalizedUrl);
 
+      // Track successful URL submission before redirect
+      trackEvent('url_submitted', {
+        event_category: 'engagement',
+        event_label: 'homepage_form'
+      });
+
       // Navigate to waiting page with the normalized URL and email
       const params = new URLSearchParams({
         url: normalizedUrl,
