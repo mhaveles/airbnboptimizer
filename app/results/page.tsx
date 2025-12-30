@@ -34,6 +34,27 @@ function ResultsContent() {
   const emailSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const hasInitialized = useRef(false);
 
+  // Helper function to format recommendations with bold headers
+  const formatRecommendations = (text: string) => {
+    const lines = text.split('\n');
+    return lines.map((line, index) => {
+      // Check if line is a header (ends with colon, starts with number and period, or is all caps)
+      const isHeader =
+        line.trim().endsWith(':') ||
+        /^\d+\.\s+[A-Z]/.test(line.trim()) ||
+        (line.trim().length > 0 && line.trim() === line.trim().toUpperCase() && /[A-Z]/.test(line));
+
+      if (isHeader) {
+        return (
+          <div key={index} className="font-bold text-gray-900 mt-4 first:mt-0">
+            {line}
+          </div>
+        );
+      }
+      return <div key={index}>{line}</div>;
+    });
+  };
+
   const fetchRecommendations = useCallback(async (recId: string) => {
     try {
       setIsLoadingRecommendations(true);
@@ -429,44 +450,30 @@ function ResultsContent() {
             Your Action Plan
           </h2>
           <div className="prose prose-lg max-w-none">
-            <div className="whitespace-pre-wrap text-gray-700 leading-relaxed">
-              {recommendations}
+            <div className="text-gray-700 leading-relaxed">
+              {formatRecommendations(recommendations)}
             </div>
           </div>
         </div>
 
-        {/* Email Input Section */}
+        {/* Social Proof Section */}
         <div className="bg-white rounded-xl shadow-lg p-8 mb-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">
-            Enter Your Email to Purchase
-          </h2>
-          <p className="text-gray-600 mb-4">
-            We need your email to send your optimized description and receipt.
-          </p>
-          <div className="space-y-3">
-            <input
-              type="email"
-              value={userEmail}
-              onChange={(e) => handleEmailChange(e.target.value)}
-              placeholder="your@email.com"
-              className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-airbnb-red transition-colors"
-              required
-            />
-            {emailLoading && (
-              <div className="flex items-center gap-2 text-gray-600">
-                <span className="animate-pulse">💾</span>
-                <span>Saving email...</span>
-              </div>
-            )}
-            {emailSaved && !emailLoading && (
-              <div className="flex items-center gap-2 text-green-600">
-                <span>✓</span>
-                <span>Email saved! You can now purchase below.</span>
-              </div>
-            )}
-            {emailError && (
-              <p className="text-red-500 text-sm">{emailError}</p>
-            )}
+          <h3 className="text-xl font-bold text-gray-900 mb-6 text-center">
+            Sound familiar?
+          </h3>
+          <div className="space-y-4 max-w-2xl mx-auto">
+            <div className="flex items-start gap-3 text-gray-700">
+              <span className="text-2xl mt-1">💬</span>
+              <p className="italic">&ldquo;I have so much trouble writing good headlines!&rdquo;</p>
+            </div>
+            <div className="flex items-start gap-3 text-gray-700">
+              <span className="text-2xl mt-1">💬</span>
+              <p className="italic">&ldquo;I have to rewrite my descriptions all the time&rdquo;</p>
+            </div>
+            <div className="flex items-start gap-3 text-gray-700">
+              <span className="text-2xl mt-1">💬</span>
+              <p className="italic">&ldquo;I never know if my listing will show up in search results&rdquo;</p>
+            </div>
           </div>
         </div>
 
@@ -474,10 +481,10 @@ function ResultsContent() {
         <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl shadow-lg p-8 mb-8 text-white">
           <div className="text-center mb-6">
             <h2 className="text-2xl font-bold mb-2">
-              Get Your Full Optimized Description
+              Stop Losing Bookings to a Weak Description
             </h2>
             <p className="text-gray-300">
-              Rank higher in search results and book more guests with a professionally crafted listing description
+              A weak description costs you bookings every week. Get copy that converts — written and ready to paste.
             </p>
           </div>
 
@@ -493,10 +500,10 @@ function ResultsContent() {
               </ul>
               <button
                 onClick={() => handleCheckout(PRICE_IDS.single, 'single')}
-                disabled={!emailSaved || checkoutLoading !== null}
+                disabled={checkoutLoading !== null}
                 className="w-full bg-airbnb-red hover:bg-[#E00007] disabled:bg-gray-500 disabled:cursor-not-allowed text-white font-semibold py-3 px-6 rounded-lg transition-colors"
               >
-                {checkoutLoading === 'single' ? 'Loading...' : !emailSaved ? 'Enter Email Above' : 'Buy Full Description - $29'}
+                {checkoutLoading === 'single' ? 'Loading...' : 'Buy Full Description - $29'}
               </button>
             </div>
 
@@ -517,10 +524,10 @@ function ResultsContent() {
               </ul>
               <button
                 onClick={() => handleCheckout(PRICE_IDS.bundle, 'bundle')}
-                disabled={!emailSaved || checkoutLoading !== null}
+                disabled={checkoutLoading !== null}
                 className="w-full bg-airbnb-red hover:bg-[#E00007] disabled:bg-gray-500 disabled:cursor-not-allowed text-white font-semibold py-3 px-6 rounded-lg transition-colors"
               >
-                {checkoutLoading === 'bundle' ? 'Loading...' : !emailSaved ? 'Enter Email Above' : 'Buy 3-Pack Bundle - $69'}
+                {checkoutLoading === 'bundle' ? 'Loading...' : 'Buy 3-Pack Bundle - $69'}
               </button>
             </div>
           </div>
