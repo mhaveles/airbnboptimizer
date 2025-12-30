@@ -2,6 +2,7 @@
 
 import { useEffect, useState, Suspense, useCallback, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import ReactMarkdown from 'react-markdown';
 import {
   validateRecordId,
   trackError,
@@ -33,27 +34,6 @@ function ResultsContent() {
   const [isLoadingRecommendations, setIsLoadingRecommendations] = useState(true);
   const emailSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const hasInitialized = useRef(false);
-
-  // Helper function to format recommendations with bold headers
-  const formatRecommendations = (text: string) => {
-    const lines = text.split('\n');
-    return lines.map((line, index) => {
-      // Check if line is a header (ends with colon, starts with number and period, or is all caps)
-      const isHeader =
-        line.trim().endsWith(':') ||
-        /^\d+\.\s+[A-Z]/.test(line.trim()) ||
-        (line.trim().length > 0 && line.trim() === line.trim().toUpperCase() && /[A-Z]/.test(line));
-
-      if (isHeader) {
-        return (
-          <div key={index} className="font-bold text-gray-900 mt-4 first:mt-0">
-            {line}
-          </div>
-        );
-      }
-      return <div key={index}>{line}</div>;
-    });
-  };
 
   const fetchRecommendations = useCallback(async (recId: string) => {
     try {
@@ -449,10 +429,43 @@ function ResultsContent() {
           <h2 className="text-2xl font-bold text-gray-900 mb-6">
             Your Action Plan
           </h2>
-          <div className="prose prose-lg max-w-none">
-            <div className="text-gray-700 leading-relaxed">
-              {formatRecommendations(recommendations)}
-            </div>
+          <div className="prose prose-lg max-w-none text-gray-700">
+            <ReactMarkdown
+              components={{
+                h1: ({ children }) => (
+                  <h3 className="text-xl font-bold text-gray-900 mt-6 mb-3 first:mt-0">
+                    {children}
+                  </h3>
+                ),
+                h2: ({ children }) => (
+                  <h4 className="text-lg font-bold text-gray-900 mt-5 mb-2 first:mt-0">
+                    {children}
+                  </h4>
+                ),
+                h3: ({ children }) => (
+                  <h5 className="text-base font-bold text-gray-900 mt-4 mb-2 first:mt-0">
+                    {children}
+                  </h5>
+                ),
+                strong: ({ children }) => (
+                  <strong className="font-bold text-gray-900">{children}</strong>
+                ),
+                p: ({ children }) => (
+                  <p className="mb-4 leading-relaxed">{children}</p>
+                ),
+                ol: ({ children }) => (
+                  <ol className="list-decimal list-inside space-y-3 mb-4">{children}</ol>
+                ),
+                ul: ({ children }) => (
+                  <ul className="list-disc list-inside space-y-3 mb-4">{children}</ul>
+                ),
+                li: ({ children }) => (
+                  <li className="leading-relaxed">{children}</li>
+                ),
+              }}
+            >
+              {recommendations}
+            </ReactMarkdown>
           </div>
         </div>
 
