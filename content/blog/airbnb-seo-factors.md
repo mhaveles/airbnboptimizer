@@ -163,7 +163,7 @@ Guests just want to know:
 
 When that's clear, behavior improves. When behavior improves, rankings follow.
 
-That's why tools like [AirbnbOptimizer](https://airbnboptimizer.com?utm_source=blog&utm_medium=article&utm_campaign=airbnb-seo-factors) focus on clarity gaps more than "SEO tricks." When guests don't have questions, they book faster.
+The fundamentals of [listing quality](/blog/airbnb-listing-quality)—cleanliness, accuracy, smooth check-in—compound over time. That's why tools like [AirbnbOptimizer](https://airbnboptimizer.com?utm_source=blog&utm_medium=article&utm_campaign=airbnb-seo-factors) focus on clarity gaps more than "SEO tricks." When guests don't have questions, they book faster.
 
 ## Final Takeaway
 

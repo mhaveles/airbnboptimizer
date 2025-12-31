@@ -108,7 +108,7 @@ Airbnb seems to reward listings that:
 - avoid friction
 - deliver predictable experiences
 
-Quality compounds. Chaos doesn't.
+Quality compounds. Chaos doesn't. The habits that help with [getting more bookings](/blog/increase-airbnb-bookings) often overlap with avoiding bad ones.
 
 ## The Mental Shift That Helped
 

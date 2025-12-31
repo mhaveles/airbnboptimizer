@@ -131,7 +131,7 @@ This is where everything compounds.
 
 You improve it by:
 - clear photos
-- honest descriptions
+- [honest descriptions](/blog/airbnb-description-writing) that build confidence
 - fair pricing
 - fast responses
 - smooth check-in

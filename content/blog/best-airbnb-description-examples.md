@@ -141,4 +141,4 @@ They:
 - say who it's for
 - say why it's worth booking
 
-Do that well, and your photos finally get the bookings they deserve.
+If you want step-by-step help on [how to write your own](/blog/airbnb-description-writing), I've covered the full process there. Do that well, and your photos finally get the bookings they deserve.
