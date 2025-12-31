@@ -42,7 +42,7 @@ These are the things I keep in mind every time I rewrite a description:
 - Avoid filler like "nice," "lovely," or "great"
 - Don't oversell—set expectations you can beat
 
-Most problems come from trying to impress instead of trying to be understood.
+Most problems come from trying to impress instead of trying to be understood. When I'm stuck on vague wording or buried strengths, I'll use [AirbnbOptimizer](https://airbnboptimizer.com?utm_source=blog&utm_medium=article&utm_campaign=best-description-examples) to spot what's unclear—it's faster than guessing.
 
 ## A Simple Structure That Works
 

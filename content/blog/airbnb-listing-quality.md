@@ -57,7 +57,7 @@ A few easy habits:
 - update amenities the moment something changes
 - keep the title honest (don't oversell "quiet" if you're above a bar)
 
-If you want fewer complaints, tighten expectations.
+If you want fewer complaints, tighten expectations. Sometimes running your listing through [AirbnbOptimizer](https://airbnboptimizer.com?utm_source=blog&utm_medium=article&utm_campaign=listing-quality-8-ways) helps spot mismatches you've become blind to—photos that oversell, buried deal-breakers, or features that don't match the title.
 
 ## 3. Make Check-In Boring—in the Best Way
 

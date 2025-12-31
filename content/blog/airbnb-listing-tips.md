@@ -75,6 +75,8 @@ So I write descriptions to:
 
 Short paragraphs. Real details. No fluff.
 
+If you're unsure what questions to answer or what's missing, [AirbnbOptimizer](https://airbnboptimizer.com?utm_source=blog&utm_medium=article&utm_campaign=17-listing-tips) can flag gaps quickly—what's buried, what's vague, what guests might hesitate on.
+
 ## 5. Highlight Amenities Guests Actually Care About
 
 Guests filter by:
