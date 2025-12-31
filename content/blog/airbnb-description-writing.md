@@ -74,6 +74,8 @@ Guests don't mind quirks. They mind surprises.
 
 Clear expectations filter out bad-fit bookings before they happen.
 
+If you're unsure what quirks to call out, tools like [AirbnbOptimizer](https://airbnboptimizer.com?utm_source=blog&utm_medium=article&utm_campaign=airbnb-description-writing) can help identify what guests might find unclear or unexpected based on your listing details.
+
 ## Write Like a Human, Not a Brochure
 
 Most weak descriptions sound like they were written to impress no one.
