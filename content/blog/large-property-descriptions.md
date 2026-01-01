@@ -114,8 +114,6 @@ It's just a signal that your description has more work to do than average.
 
 That's also why some hosts invest more care here—not because words magically create demand, but because clarity reduces friction for the right guests.
 
-If this resonates, you may also find [Why I Turn Away Bookings (And Why You Should Too)](/blog/turn-away-bookings) helpful—it explores how clarity and selectivity often go hand in hand.
-
 ## Final Thought
 
 For many listings, a description just supports the visuals.
