@@ -3,6 +3,8 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getPostBySlug, getAllSlugs } from '@/lib/blog';
 import styles from './BlogPost.module.css';
+import BlogNav from '@/components/BlogNav';
+import BlogCTA from '@/components/BlogCTA';
 
 interface BlogPostPageProps {
   params: Promise<{ slug: string }>;
@@ -93,6 +95,8 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
         />
       )}
 
+      <BlogNav />
+
       <article className="min-h-screen bg-white">
         <div className="w-full max-w-[800px] mx-auto px-6 sm:px-8 py-16">
           {/* Article Header */}
@@ -132,10 +136,14 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
             </section>
           )}
 
+          {/* CTA Section */}
+          <BlogCTA />
+
           {/* Back Link */}
-          <div className="mt-16 pt-8 border-t border-gray-200">
-            <Link href="/blog" className="text-[#0066cc] hover:underline font-medium no-underline">
-              ← Back to Blog
+          <div className="mt-8 pt-8 border-t border-gray-200">
+            <Link href="/blog" className="inline-flex items-center gap-2 text-lg font-semibold text-[#FF5A5F] hover:text-[#e04e52] transition-colors">
+              <span>←</span>
+              <span>Back to Blog</span>
             </Link>
           </div>
         </div>
