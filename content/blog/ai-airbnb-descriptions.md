@@ -50,8 +50,6 @@ Left alone, AI tends to smooth over edges. And edges matter.
 
 This is the same reason I'm cautious about anything that promises "optimized" descriptions without context. Over-smoothing leads to overpromising.
 
-If this feels familiar, it ties directly to [Why I Turn Away Bookings (And Why You Should Too)](/blog/turn-away-bookings).
-
 ## How Airbnb and Booking Platforms Already Use This Tech
 
 Whether we like it or not, the platforms are already here.

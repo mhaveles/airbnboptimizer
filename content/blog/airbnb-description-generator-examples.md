@@ -53,8 +53,6 @@ That's how you end up with:
 - remote workers booking noisy downtown units
 - budget guests expecting boutique experiences
 
-If this sounds familiar, it ties closely to [Why I Turn Away Bookings (And Why You Should Too)](/blog/turn-away-bookings).
-
 ## The Real Job of a Description
 
 A good description doesn't "sell."

@@ -97,8 +97,6 @@ This is where most of the detail goes:
 
 If guests are asking questions you *already answered somewhere*, they probably didn't find it here—or it wasn't clear.
 
-(If this sounds familiar, see: [Why I Turn Away Bookings (And Why You Should Too)](/blog/turn-away-bookings))
-
 ### Other Things to Note
 This section exists to prevent bad reviews.
 

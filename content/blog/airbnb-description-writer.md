@@ -79,7 +79,7 @@ They don't know:
 
 Left unchecked, this leads to overpromising. And overpromising is expensive.
 
-If you've read [Why I Turn Away Bookings (And Why You Should Too)](/blog/turn-away-bookings), you already know why clarity beats hype every time.
+Clarity beats hype every time.
 
 ## Using a Description Writer Without Hurting Yourself
 
