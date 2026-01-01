@@ -2,7 +2,7 @@ import Link from 'next/link';
 
 export default function BlogNav() {
   return (
-    <nav className="border-b border-gray-200 bg-white">
+    <nav className="sticky top-0 z-50 border-b border-gray-200 bg-white shadow-sm">
       <div className="max-w-[800px] mx-auto px-6 py-4">
         <Link
           href="/"
