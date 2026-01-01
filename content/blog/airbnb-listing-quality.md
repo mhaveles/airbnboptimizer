@@ -84,7 +84,7 @@ If you charge premium rates, I've found you need:
 - premium basics (great bed, linens, towels, stocked kitchen)
 - premium smoothness (easy check-in, fast responses)
 
-You can often raise value ratings without lowering price just by removing friction.
+You can often raise value ratings without lowering price just by removing friction. Part of that is [turning away bad-fit bookings](/blog/turn-away-bookings) who won't appreciate what you offer.
 
 ## 5. Communicate Like a Calm Professional
 

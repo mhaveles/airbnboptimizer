@@ -205,7 +205,7 @@ If you:
 
 You won't know what helped.
 
-Test slowly. Watch results.
+Test slowly. Watch results. Focus on fundamentals like [listing quality improvements](/blog/airbnb-listing-quality) before chasing advanced tactics.
 
 ## A Shortcut I Use
 

@@ -135,7 +135,7 @@ Common gaps to close:
 - bedroom setup (especially for groups)
 - what "stocked kitchen" really means
 
-If you want a quick gut-check on clarity, running your listing through [AirbnbOptimizer](https://airbnboptimizer.com?utm_source=blog&utm_medium=article&utm_campaign=increase-airbnb-bookings) can highlight what's unclear or missing. I use the same logic when I review my own listings after a slow month.
+Looking at [description examples that work](/blog/best-airbnb-description-examples) can help you see how top listings set clear expectations. If you want a quick gut-check on clarity, running your listing through [AirbnbOptimizer](https://airbnboptimizer.com?utm_source=blog&utm_medium=article&utm_campaign=increase-airbnb-bookings) can highlight what's unclear or missing. I use the same logic when I review my own listings after a slow month.
 
 ## 9. Build Relationships Without Being Weird About It
 

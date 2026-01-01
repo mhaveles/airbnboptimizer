@@ -38,7 +38,7 @@ Instead of trying to sound impressive, focus on:
 - what problem it solves
 - one real differentiator
 
-Descriptions should answer questions before guests ask them. Bullet points help. So does honesty. Confusion kills bookings faster than boring copy ever will.
+[Writing clear descriptions](/blog/airbnb-description-writing) that answer questions before guests ask them is one of the highest-leverage improvements you can make. Bullet points help. So does honesty. Confusion kills bookings faster than boring copy ever will.
 
 ## 2. Photos Carry More Weight Than Most Hosts Realize
 

@@ -154,7 +154,7 @@ Before publishing, I run a quick checklist:
 - Is it skimmable on a phone?
 - Would the wrong guest self-select out?
 
-Then I cut 10–20% of the words. Most descriptions improve when shortened.
+Then I cut 10–20% of the words. Most descriptions improve when shortened. If you want the full framework for [description writing fundamentals](/blog/airbnb-description-writing), I've covered that step-by-step.
 
 ## If You Don't Want to Deal With Prompts
 

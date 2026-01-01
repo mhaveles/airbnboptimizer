@@ -96,7 +96,7 @@ Cancellations are one of the fastest ways to lose trust with Airbnb.
 
 Same goes for declining booking requests. If guests try to book and keep hitting walls, Airbnb shows your listing less.
 
-I only accept bookings I'm confident I can honor.
+I only accept bookings I'm confident I can honor. That sometimes means [avoiding bad-fit bookings](/blog/turn-away-bookings) early—better to say no upfront than deal with issues later.
 
 ### Price Like a Real Human Would
 
