@@ -5,6 +5,7 @@ import { getPostBySlug, getAllSlugs } from '@/lib/blog';
 import styles from './BlogPost.module.css';
 import BlogNav from '@/components/BlogNav';
 import BlogCTA from '@/components/BlogCTA';
+import UTMCapture from '@/components/UTMCapture';
 
 interface BlogPostPageProps {
   params: Promise<{ slug: string }>;
@@ -95,6 +96,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
         />
       )}
 
+      <UTMCapture />
       <BlogNav />
 
       <article className="min-h-screen bg-white">

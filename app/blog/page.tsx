@@ -2,6 +2,8 @@ import { Metadata } from 'next';
 import Link from 'next/link';
 import { getAllPosts } from '@/lib/blog';
 import BlogNav from '@/components/BlogNav';
+import BackToHome from '@/components/BackToHome';
+import UTMCapture from '@/components/UTMCapture';
 
 export const metadata: Metadata = {
   title: 'Blog - AirbnbOptimizer',
@@ -18,6 +20,7 @@ export default async function BlogPage() {
 
   return (
     <>
+      <UTMCapture />
       <BlogNav />
       <main className="min-h-screen bg-white">
         <div className="w-full max-w-[800px] mx-auto px-6 sm:px-8 py-16">
@@ -56,10 +59,7 @@ export default async function BlogPage() {
         )}
 
         <div className="mt-16 pt-8 border-t border-gray-200">
-          <Link href="/" className="inline-flex items-center gap-2 text-lg font-semibold text-[#FF5A5F] hover:text-[#e04e52] transition-colors">
-            <span>←</span>
-            <span>Back to Home</span>
-          </Link>
+          <BackToHome />
         </div>
       </div>
     </main>

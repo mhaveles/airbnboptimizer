@@ -3,6 +3,7 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { trackError } from '@/lib/validation';
+import { captureUTMParams, getStoredUTMParams } from '@/lib/utm';
 
 // Type declaration for Google Analytics gtag function
 declare global {
@@ -19,6 +20,11 @@ function HomeContent() {
   const [pageError, setPageError] = useState<string | null>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
+
+  // Capture UTM parameters on page load and store in sessionStorage
+  useEffect(() => {
+    captureUTMParams(searchParams);
+  }, [searchParams]);
 
   // Check for error messages in URL params (from redirects)
   useEffect(() => {
@@ -151,15 +157,8 @@ function HomeContent() {
         event_label: 'homepage_form'
       });
 
-      // Capture UTM parameters from current URL
-      const utmParams: Record<string, string> = {};
-      const utmKeys = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term'];
-      utmKeys.forEach(key => {
-        const value = searchParams.get(key);
-        if (value) {
-          utmParams[key] = value;
-        }
-      });
+      // Get stored UTM parameters (persists across page navigation)
+      const utmParams = getStoredUTMParams();
 
       // Navigate to waiting page with the normalized URL, email, and UTM params
       const params = new URLSearchParams({

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { buildURLWithUTMs } from '@/lib/utm';
 
 export default function BlogCTA() {
   const [url, setUrl] = useState('');
@@ -8,9 +9,12 @@ export default function BlogCTA() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (url.trim()) {
-      window.location.href = `/?url=${encodeURIComponent(url)}`;
+      // Preserve UTM parameters when redirecting to homepage
+      const redirectUrl = buildURLWithUTMs('/', { url: url.trim() });
+      window.location.href = redirectUrl;
     } else {
-      window.location.href = '/';
+      // Preserve UTM parameters even without URL
+      window.location.href = buildURLWithUTMs('/', {});
     }
   };
 
