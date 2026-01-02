@@ -8,6 +8,7 @@ import {
   ERROR_MESSAGES,
   type ErrorInfo
 } from '@/lib/validation';
+import { captureUTMParams } from '@/lib/utm';
 
 const TIMEOUT_MS = 120000; // 120 second timeout (Make.com webhook takes ~25 seconds)
 
@@ -19,10 +20,13 @@ function WaitingContent() {
   const abortControllerRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
+    // Capture UTM parameters on page load and store in sessionStorage
+    captureUTMParams(searchParams);
+
     const airbnbUrl = searchParams.get('url');
     const email = searchParams.get('email');
 
-    // Capture UTM parameters
+    // Extract UTM parameters from URL to send to webhook
     const utmParams: Record<string, string> = {};
     const utmKeys = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term'];
     utmKeys.forEach(key => {
