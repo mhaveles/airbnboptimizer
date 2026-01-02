@@ -151,10 +151,21 @@ function HomeContent() {
         event_label: 'homepage_form'
       });
 
-      // Navigate to waiting page with the normalized URL and email
+      // Capture UTM parameters from current URL
+      const utmParams: Record<string, string> = {};
+      const utmKeys = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term'];
+      utmKeys.forEach(key => {
+        const value = searchParams.get(key);
+        if (value) {
+          utmParams[key] = value;
+        }
+      });
+
+      // Navigate to waiting page with the normalized URL, email, and UTM params
       const params = new URLSearchParams({
         url: normalizedUrl,
         ...(email && { email }),
+        ...utmParams,
       });
       router.push(`/waiting?${params.toString()}`);
 
