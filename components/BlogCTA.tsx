@@ -1,21 +1,28 @@
 'use client';
 
 import { useState } from 'react';
-import { buildURLWithUTMs } from '@/lib/utm';
+import { useRouter } from 'next/navigation';
+import { getStoredUTMParams } from '@/lib/utm';
 
 export default function BlogCTA() {
   const [url, setUrl] = useState('');
+  const router = useRouter();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (url.trim()) {
-      // Preserve UTM parameters when redirecting to homepage
-      const redirectUrl = buildURLWithUTMs('/', { url: url.trim() });
-      window.location.href = redirectUrl;
-    } else {
-      // Preserve UTM parameters even without URL
-      window.location.href = buildURLWithUTMs('/', {});
-    }
+
+    // Get stored UTM parameters
+    const utmParams = getStoredUTMParams();
+
+    // Build params object
+    const params = new URLSearchParams({
+      ...(url.trim() && { url: url.trim() }),
+      ...utmParams,
+    });
+
+    // Navigate to homepage with UTM parameters preserved
+    const queryString = params.toString();
+    router.push(queryString ? `/?${queryString}` : '/');
   };
 
   return (
