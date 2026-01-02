@@ -22,6 +22,16 @@ function WaitingContent() {
     const airbnbUrl = searchParams.get('url');
     const email = searchParams.get('email');
 
+    // Capture UTM parameters
+    const utmParams: Record<string, string> = {};
+    const utmKeys = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term'];
+    utmKeys.forEach(key => {
+      const value = searchParams.get(key);
+      if (value) {
+        utmParams[key] = value;
+      }
+    });
+
     // Validate URL is present
     if (!airbnbUrl) {
       trackError('missing_url', 'No URL provided to waiting page');
@@ -62,6 +72,7 @@ function WaitingContent() {
           body: JSON.stringify({
             airbnbUrl,
             ...(email && { email, email_source: "Home Page" }),
+            ...utmParams,
           }),
           signal: abortControllerRef.current?.signal,
         });
