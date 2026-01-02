@@ -1,6 +1,7 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
 import { getAllPosts } from '@/lib/blog';
+import BlogNav from '@/components/BlogNav';
 
 export const metadata: Metadata = {
   title: 'Blog - AirbnbOptimizer',
@@ -16,8 +17,10 @@ export default async function BlogPage() {
   const posts = await getAllPosts();
 
   return (
-    <main className="min-h-screen bg-white">
-      <div className="w-full max-w-[800px] mx-auto px-6 sm:px-8 py-16">
+    <>
+      <BlogNav />
+      <main className="min-h-screen bg-white">
+        <div className="w-full max-w-[800px] mx-auto px-6 sm:px-8 py-16">
         <header className="mb-16">
           <h1 className="text-5xl font-bold text-gray-900 mb-4">Blog</h1>
           <p className="text-xl text-gray-700 leading-relaxed">
@@ -53,11 +56,13 @@ export default async function BlogPage() {
         )}
 
         <div className="mt-16 pt-8 border-t border-gray-200">
-          <Link href="/" className="text-[#0066cc] hover:underline font-medium no-underline">
-            ← Back to Home
+          <Link href="/" className="inline-flex items-center gap-2 text-lg font-semibold text-[#FF5A5F] hover:text-[#e04e52] transition-colors">
+            <span>←</span>
+            <span>Back to Home</span>
           </Link>
         </div>
       </div>
     </main>
+    </>
   );
 }
