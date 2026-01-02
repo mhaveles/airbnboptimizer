@@ -1,6 +1,7 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { Suspense } from 'react';
 import { getPostBySlug, getAllSlugs } from '@/lib/blog';
 import styles from './BlogPost.module.css';
 import BlogNav from '@/components/BlogNav';
@@ -96,7 +97,9 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
         />
       )}
 
-      <UTMCapture />
+      <Suspense fallback={null}>
+        <UTMCapture />
+      </Suspense>
       <BlogNav />
 
       <article className="min-h-screen bg-white">

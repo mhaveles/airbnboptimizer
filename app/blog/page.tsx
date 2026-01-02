@@ -1,5 +1,6 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
+import { Suspense } from 'react';
 import { getAllPosts } from '@/lib/blog';
 import BlogNav from '@/components/BlogNav';
 import BackToHome from '@/components/BackToHome';
@@ -20,7 +21,9 @@ export default async function BlogPage() {
 
   return (
     <>
-      <UTMCapture />
+      <Suspense fallback={null}>
+        <UTMCapture />
+      </Suspense>
       <BlogNav />
       <main className="min-h-screen bg-white">
         <div className="w-full max-w-[800px] mx-auto px-6 sm:px-8 py-16">
