@@ -188,6 +188,9 @@ function HomeContent() {
         <p className="text-xl text-gray-600">
           Rank higher in Airbnb search. Get more eyes on your listing.
         </p>
+        <p className="text-base text-gray-500">
+          Most listings we analyze have at least one thing costing them bookings.
+        </p>
 
         {/* Page Error Message */}
         {pageError && (

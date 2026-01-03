@@ -493,6 +493,9 @@ function ResultsContent() {
         {/* Premium Purchase Section */}
         <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl shadow-lg p-8 mb-8 text-white">
           <div className="text-center mb-6">
+            <p className="text-lg font-medium italic mb-6 text-gray-300">
+              One extra booking per month pays for this 10x over.
+            </p>
             <h2 className="text-2xl font-bold mb-2">
               Stop Losing Bookings to a Weak Description
             </h2>
