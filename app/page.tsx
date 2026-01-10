@@ -186,10 +186,10 @@ function HomeContent() {
 
         {/* Subtitle */}
         <p className="text-xl text-gray-600">
-          Find out what&apos;s costing you bookings — in 60 seconds.
+          You&apos;re losing bookings right now. Find out why.
         </p>
         <p className="text-base text-gray-500">
-          See exactly why guests scroll past your listing.
+          Most hosts can&apos;t see what guests see. You&apos;re about to.
         </p>
 
         {/* Page Error Message */}
@@ -257,16 +257,16 @@ function HomeContent() {
             disabled={isLoading || !airbnbUrl || !!urlError}
             className="w-full bg-airbnb-red hover:bg-[#E00007] text-white font-semibold py-4 px-8 rounded-lg text-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isLoading ? 'Verifying URL...' : 'Optimize My Listing'}
+            {isLoading ? 'Verifying URL...' : 'Show Me What I&apos;m Missing'}
           </button>
 
           {/* What you'll get */}
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-500 mb-3">What you&apos;ll get:</p>
             <ul className="text-sm text-gray-500 space-y-2">
-              <li>• Which photo should be your cover image</li>
-              <li>• What&apos;s unclear in your title and description</li>
-              <li>• The top 2-3 changes that would get you more clicks</li>
+              <li>• The photo change that gets you 3x more clicks</li>
+              <li>• The confused guests who bounced in 5 seconds</li>
+              <li>• The 2-minute fix that stops the scroll</li>
             </ul>
           </div>
         </form>
