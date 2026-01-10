@@ -186,7 +186,7 @@ function HomeContent() {
 
         {/* Subtitle */}
         <p className="text-xl text-gray-600">
-          Find out what's costing you bookings — in 60 seconds.
+          Find out what&apos;s costing you bookings — in 60 seconds.
         </p>
         <p className="text-base text-gray-500">
           See exactly why guests scroll past your listing.
@@ -262,10 +262,10 @@ function HomeContent() {
 
           {/* What you'll get */}
           <div className="mt-6 text-center">
-            <p className="text-sm text-gray-500 mb-3">What you'll get:</p>
+            <p className="text-sm text-gray-500 mb-3">What you&apos;ll get:</p>
             <ul className="text-sm text-gray-500 space-y-2">
               <li>• Which photo should be your cover image</li>
-              <li>• What's unclear in your title and description</li>
+              <li>• What&apos;s unclear in your title and description</li>
               <li>• The top 2-3 changes that would get you more clicks</li>
             </ul>
           </div>
