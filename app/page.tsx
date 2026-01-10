@@ -186,10 +186,10 @@ function HomeContent() {
 
         {/* Subtitle */}
         <p className="text-xl text-gray-600">
-          Rank higher in Airbnb search. Get more eyes on your listing.
+          Find out what's costing you bookings — in 60 seconds.
         </p>
         <p className="text-base text-gray-500">
-          Most listings we analyze have at least one thing costing them bookings.
+          See exactly why guests scroll past your listing.
         </p>
 
         {/* Page Error Message */}
@@ -259,6 +259,16 @@ function HomeContent() {
           >
             {isLoading ? 'Verifying URL...' : 'Optimize My Listing'}
           </button>
+
+          {/* What you'll get */}
+          <div className="mt-6 text-center">
+            <p className="text-sm text-gray-500 mb-3">What you'll get:</p>
+            <ul className="text-sm text-gray-500 space-y-2">
+              <li>• Which photo should be your cover image</li>
+              <li>• What's unclear in your title and description</li>
+              <li>• The top 2-3 changes that would get you more clicks</li>
+            </ul>
+          </div>
         </form>
 
         {/* Footer Note */}
