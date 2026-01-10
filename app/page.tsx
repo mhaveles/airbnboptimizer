@@ -260,7 +260,7 @@ function HomeContent() {
             disabled={isLoading || !airbnbUrl || !!urlError}
             className="w-full bg-airbnb-red hover:bg-[#E00007] text-white font-semibold py-4 px-8 rounded-lg text-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isLoading ? 'Verifying URL...' : 'Show Me What I&apos;m Missing'}
+            {isLoading ? 'Verifying URL...' : "Show Me What I'm Missing"}
           </button>
 
           {/* What you'll get */}
