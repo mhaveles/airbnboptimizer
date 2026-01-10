@@ -159,6 +159,7 @@ function HomeContent() {
 
       // Get stored UTM parameters (persists across page navigation)
       const utmParams = getStoredUTMParams();
+      console.log('[Homepage] Retrieved UTM params for navigation:', utmParams);
 
       // Navigate to waiting page with the normalized URL, email, and UTM params
       const params = new URLSearchParams({
@@ -166,7 +167,9 @@ function HomeContent() {
         ...(email && { email }),
         ...utmParams,
       });
-      router.push(`/waiting?${params.toString()}`);
+      const targetUrl = `/waiting?${params.toString()}`;
+      console.log('[Homepage] Navigating to:', targetUrl);
+      router.push(targetUrl);
 
     } catch (error) {
       console.error('Error normalizing URL:', error);

@@ -8,7 +8,7 @@ import {
   ERROR_MESSAGES,
   type ErrorInfo
 } from '@/lib/validation';
-import { captureUTMParams } from '@/lib/utm';
+import { captureUTMParams, getStoredUTMParams } from '@/lib/utm';
 
 const TIMEOUT_MS = 120000; // 120 second timeout (Make.com webhook takes ~25 seconds)
 
@@ -20,21 +20,16 @@ function WaitingContent() {
   const abortControllerRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
-    // Capture UTM parameters on page load and store in sessionStorage
+    // Capture UTM parameters from URL and store in sessionStorage
     captureUTMParams(searchParams);
 
     const airbnbUrl = searchParams.get('url');
     const email = searchParams.get('email');
 
-    // Extract UTM parameters from URL to send to webhook
-    const utmParams: Record<string, string> = {};
-    const utmKeys = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term'];
-    utmKeys.forEach(key => {
-      const value = searchParams.get(key);
-      if (value) {
-        utmParams[key] = value;
-      }
-    });
+    // Get UTM parameters from sessionStorage (most reliable source)
+    // This ensures we get UTMs even if they're not in the current URL
+    const utmParams = getStoredUTMParams();
+    console.log('[Waiting Page] UTM params to send to webhook:', utmParams);
 
     // Validate URL is present
     if (!airbnbUrl) {
@@ -68,16 +63,21 @@ function WaitingContent() {
     const callMakeWebhook = async () => {
       try {
         const webhookUrl = process.env.NEXT_PUBLIC_MAKE_WEBHOOK_URL || 'https://hook.us2.make.com/cayiub7qq8b6n1tkm95tnv5o10169j3j';
+
+        // Build webhook payload
+        const webhookPayload = {
+          airbnbUrl,
+          ...(email && { email, email_source: "Home Page" }),
+          ...utmParams,
+        };
+        console.log('[Waiting Page] Sending to webhook:', webhookPayload);
+
         const response = await fetch(webhookUrl, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({
-            airbnbUrl,
-            ...(email && { email, email_source: "Home Page" }),
-            ...utmParams,
-          }),
+          body: JSON.stringify(webhookPayload),
           signal: abortControllerRef.current?.signal,
         });
 
