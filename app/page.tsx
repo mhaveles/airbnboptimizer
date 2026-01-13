@@ -23,7 +23,20 @@ function HomeContent() {
 
   // Capture UTM parameters on page load and store in sessionStorage
   useEffect(() => {
+    // Debug: Log all search params on homepage
+    const allParams: Record<string, string> = {};
+    searchParams.forEach((value, key) => {
+      allParams[key] = value;
+    });
+    console.log('[Homepage] All URL search params:', allParams);
+
     captureUTMParams(searchParams);
+
+    // Debug: Check what got stored
+    if (typeof window !== 'undefined' && sessionStorage) {
+      const rawStored = sessionStorage.getItem('airbnb_optimizer_utm_params');
+      console.log('[Homepage] After capture, sessionStorage contains:', rawStored);
+    }
   }, [searchParams]);
 
   // Check for error messages in URL params (from redirects)

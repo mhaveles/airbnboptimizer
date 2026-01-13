@@ -20,16 +20,33 @@ function WaitingContent() {
   const abortControllerRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
+    // Debug: Log all search params
+    const allParams: Record<string, string> = {};
+    searchParams.forEach((value, key) => {
+      allParams[key] = value;
+    });
+    console.log('[Waiting Page] All URL search params:', allParams);
+
     // Capture UTM parameters from URL and store in sessionStorage
     captureUTMParams(searchParams);
 
     const airbnbUrl = searchParams.get('url');
     const email = searchParams.get('email');
 
+    // Debug: Check if sessionStorage is available
+    console.log('[Waiting Page] sessionStorage available?', typeof window !== 'undefined' && typeof sessionStorage !== 'undefined');
+
+    // Debug: Check what's in sessionStorage
+    if (typeof window !== 'undefined' && sessionStorage) {
+      const rawStored = sessionStorage.getItem('airbnb_optimizer_utm_params');
+      console.log('[Waiting Page] Raw sessionStorage value:', rawStored);
+    }
+
     // Get UTM parameters from sessionStorage (most reliable source)
     // This ensures we get UTMs even if they're not in the current URL
     const utmParams = getStoredUTMParams();
-    console.log('[Waiting Page] UTM params to send to webhook:', utmParams);
+    console.log('[Waiting Page] UTM params retrieved from sessionStorage:', utmParams);
+    console.log('[Waiting Page] UTM params is empty object?', Object.keys(utmParams).length === 0);
 
     // Validate URL is present
     if (!airbnbUrl) {
@@ -70,14 +87,25 @@ function WaitingContent() {
           ...(email && { email, email_source: "Home Page" }),
           ...utmParams,
         };
-        console.log('[Waiting Page] Sending to webhook:', webhookPayload);
+
+        console.log('[Waiting Page] Building webhook payload...');
+        console.log('[Waiting Page] - airbnbUrl:', airbnbUrl);
+        console.log('[Waiting Page] - email:', email);
+        console.log('[Waiting Page] - utmParams:', utmParams);
+        console.log('[Waiting Page] - utmParams keys:', Object.keys(utmParams));
+        console.log('[Waiting Page] - Final webhookPayload:', webhookPayload);
+        console.log('[Waiting Page] - Final webhookPayload keys:', Object.keys(webhookPayload));
+
+        const jsonBody = JSON.stringify(webhookPayload);
+        console.log('[Waiting Page] JSON body being sent to webhook:', jsonBody);
+        console.log('[Waiting Page] JSON body length:', jsonBody.length);
 
         const response = await fetch(webhookUrl, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify(webhookPayload),
+          body: jsonBody,
           signal: abortControllerRef.current?.signal,
         });
 
