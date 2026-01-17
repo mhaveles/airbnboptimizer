@@ -34,12 +34,16 @@ export async function generateMetadata({ params }: BlogPostPageProps): Promise<M
     description: post.description,
     keywords: post.keywords,
     authors: [{ name: post.author }],
+    alternates: {
+      canonical: `/blog/${slug}`,
+    },
     openGraph: {
       title: post.title,
       description: post.description,
       type: 'article',
       publishedTime: post.date,
       authors: [post.author],
+      url: `https://airbnboptimizer.com/blog/${slug}`,
     },
   };
 }
