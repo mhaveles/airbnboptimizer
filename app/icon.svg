@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <!-- Magnifying glass handle -->
+  <rect x="130" y="140" width="20" height="50" rx="10" fill="#5B6371" transform="rotate(45 140 165)"/>
+
+  <!-- Magnifying glass outer circle -->
+  <circle cx="90" cy="90" r="70" fill="white" stroke="#5B6371" stroke-width="16"/>
+
+  <!-- Red wavy line inside -->
+  <path d="M 55 90 Q 65 75, 75 90 T 95 90 T 115 90"
+        fill="none"
+        stroke="#FF5A5F"
+        stroke-width="12"
+        stroke-linecap="round"/>
+</svg>
