@@ -9,10 +9,14 @@ import UTMCapture from '@/components/UTMCapture';
 export const metadata: Metadata = {
   title: 'Blog - AirbnbOptimizer',
   description: 'Tips, guides, and insights for optimizing your Airbnb listing and ranking higher in search results.',
+  alternates: {
+    canonical: '/blog',
+  },
   openGraph: {
     title: 'Blog - AirbnbOptimizer',
     description: 'Tips, guides, and insights for optimizing your Airbnb listing and ranking higher in search results.',
     type: 'website',
+    url: 'https://airbnboptimizer.com/blog',
   },
 };
 

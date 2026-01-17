@@ -6,6 +6,7 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://airbnboptimizer.com'),
   title: "AirbnbOptimizer - Rank Higher in Airbnb Search",
   description: "Find out what's costing you bookings in 60 seconds. Free analysis shows exactly why guests scroll past your listing and what to fix.",
   icons: {
@@ -15,10 +16,14 @@ export const metadata: Metadata = {
     shortcut: '/icon.svg',
     apple: '/icon.svg',
   },
+  alternates: {
+    canonical: '/',
+  },
   openGraph: {
     title: "AirbnbOptimizer - Rank Higher in Airbnb Search",
     description: "Find out what's costing you bookings in 60 seconds. Free analysis shows exactly why guests scroll past your listing and what to fix.",
     type: 'website',
+    url: 'https://airbnboptimizer.com',
   },
 };
 
