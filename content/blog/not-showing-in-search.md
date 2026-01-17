@@ -1,7 +1,7 @@
 ---
 title: "Why Is My Airbnb Not Showing Up in Search?"
 description: "If your listing exists but doesn't appear, it's often because Airbnb can't confidently match it to guests."
-date: "2025-12-30"
+date: "2026-1-16"
 author: "Arthur"
 keywords: ["why is my airbnb not showing up in search", "airbnb search visibility"]
 faq:

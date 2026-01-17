@@ -1,7 +1,7 @@
 ---
 title: "Why Is My Airbnb Not Getting Booked (And How to Fix It)"
 description: "If your calendar is empty, the issue usually isn't price. It's hesitation. Here's where bookings quietly fall apart."
-date: "2025-12-30"
+date: "2026-1-16"
 author: "Arthur"
 keywords: ["why is my airbnb not getting booked", "airbnb bookings dropped", "airbnb not booking"]
 faq:

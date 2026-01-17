@@ -1,7 +1,7 @@
 ---
 title: "Why Is My Airbnb Not Getting Views?"
 description: "Your listing is live, available, and still invisible. Here's why impressions drop before bookings do."
-date: "2025-12-30"
+date: "2026-1-16"
 author: "Arthur"
 keywords: ["why is my airbnb not getting views", "airbnb impressions dropped"]
 faq:
