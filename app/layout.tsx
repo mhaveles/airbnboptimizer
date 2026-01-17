@@ -7,7 +7,7 @@ const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "AirbnbOptimizer - Rank Higher in Airbnb Search",
-  description: "Get your Airbnb listing seen by more guests. Highlight what makes you stand out.",
+  description: "Find out what's costing you bookings in 60 seconds. Free analysis shows exactly why guests scroll past your listing and what to fix.",
 };
 
 export default function RootLayout({
