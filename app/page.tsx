@@ -195,6 +195,40 @@ function HomeContent() {
           Most hosts can&apos;t see what guests see. You&apos;re about to.
         </p>
 
+        {/* What you'll get section */}
+        <div className="text-left space-y-4">
+          <h3 className="text-lg font-semibold text-gray-900">
+            What you&apos;ll get (in 60 seconds):
+          </h3>
+
+          <div className="space-y-3">
+            <p className="text-sm text-gray-600">
+              <strong>Cover Photo Recommendation</strong><br />
+              Which image converts best as your first impression—and why it works better than your current one.
+            </p>
+
+            <p className="text-sm text-gray-600">
+              <strong>Updated Headline</strong><br />
+              A rewritten title (under 50 characters) that clarifies location, vibe, and your key feature up front.
+            </p>
+
+            <p className="text-sm text-gray-600">
+              <strong>Top 5 Photo Order</strong><br />
+              The exact sequence that shows your space the way guests actually scan—main space, sleeping setup, standout features.
+            </p>
+
+            <p className="text-sm text-gray-600">
+              <strong>Description Review</strong><br />
+              What&apos;s working, what&apos;s buried, and which details guests need in the first 3 lines to decide faster.
+            </p>
+
+            <p className="text-sm text-gray-600">
+              <strong>Photo Improvement Suggestions</strong><br />
+              Missing shots that answer common questions (entrance, layout, small details that build confidence).
+            </p>
+          </div>
+        </div>
+
         {/* Page Error Message */}
         {pageError && (
           <div className="bg-red-50 border-2 border-red-200 rounded-xl p-4">
@@ -242,7 +276,7 @@ function HomeContent() {
           {/* Optional Email Input */}
           <div className="relative">
             <label htmlFor="email" className="block text-left text-sm text-gray-600 mb-2">
-              Email (optional - to receive results)
+              Email (optional—only if you want a copy sent to you)
             </label>
             <input
               id="email"
@@ -263,21 +297,11 @@ function HomeContent() {
             {isLoading ? 'Verifying URL...' : "Show Me What I'm Missing"}
           </button>
 
-          {/* What you'll get */}
-          <div className="mt-6 text-center">
-            <p className="text-sm text-gray-500 mb-3">What you&apos;ll get:</p>
-            <ul className="text-sm text-gray-500 space-y-2">
-              <li>• The photo change that gets you 3x more clicks</li>
-              <li>• The confused guests who bounced in 5 seconds</li>
-              <li>• The 2-minute fix that stops the scroll</li>
-            </ul>
-          </div>
+          {/* Timing indicator */}
+          <p className="text-sm text-gray-500">
+            Analysis takes about 60 seconds. Results show on the next page—no email required.
+          </p>
         </form>
-
-        {/* Footer Note */}
-        <p className="text-sm text-gray-500 mt-8">
-          Analysis takes about 30-60 seconds
-        </p>
       </div>
     </div>
   );
