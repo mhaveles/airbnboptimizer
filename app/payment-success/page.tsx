@@ -25,20 +25,6 @@ function PaymentSuccessContent() {
       return;
     }
 
-    // Fire-and-forget: trigger paid description generation
-    // The Stripe webhook sets status to "paid_webhook2_triggered",
-    // this call runs the AI pipeline and saves results to Airtable.
-    // We don't await — polling below will detect the result.
-    if (recordId) {
-      fetch('/api/generate-description', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ recordId }),
-      }).catch((err) => {
-        console.error('Failed to trigger description generation:', err);
-      });
-    }
-
     let pollCount = 0;
     let intervalId: NodeJS.Timeout | null = null;
     let timeoutId: NodeJS.Timeout | null = null;
@@ -66,38 +52,47 @@ function PaymentSuccessContent() {
         pollCount++;
         console.log(`Polling attempt ${pollCount}/${MAX_POLLS}`);
 
-        let response;
-        let data;
-
-        // If we have recordId, use /api/get-record (more reliable)
-        // Otherwise fall back to polling by session_id
+        // If we have recordId, use /api/generate-description as a state machine.
+        // Each call advances one step AND checks if we're done.
         if (recordId) {
-          console.log('Polling with recordId:', recordId);
-          response = await fetch(`/api/get-record?recordId=${encodeURIComponent(recordId)}`);
-          data = await response.json();
+          console.log('Polling generate-description with recordId:', recordId);
+          const response = await fetch('/api/generate-description', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ recordId }),
+          });
+          const data = await response.json();
 
-          // Check if premiumDescription exists in the response
-          if (data.success && data.premiumDescription) {
-            console.log('Premium description found via recordId!');
+          console.log('Generate-description response:', data);
+
+          if (data.status === 'complete' && data.description) {
+            console.log('Premium description ready!');
 
             if (intervalId) clearInterval(intervalId);
             if (timeoutId) clearTimeout(timeoutId);
             clearInterval(progressInterval);
 
-            setPremiumDescription(data.premiumDescription);
+            setPremiumDescription(data.description);
             setProgress(100);
             setIsLoading(false);
             return;
           }
+
+          if (data.status === 'error') {
+            console.error('Generate-description error:', data.message);
+            // Don't stop — keep polling in case it recovers
+          }
+
+          // Otherwise keep polling (waiting_for_payment, analyzing, unknown)
         } else if (sessionId) {
+          // Fallback: poll by session_id using existing endpoint
           console.log('Polling with session_id:', sessionId);
-          response = await fetch(`/api/poll-description?session_id=${encodeURIComponent(sessionId)}`);
-          data = await response.json();
+          const response = await fetch(`/api/poll-description?session_id=${encodeURIComponent(sessionId)}`);
+          const data = await response.json();
 
           console.log('Poll response:', data);
 
           if (data.success && data.hasDescription && data.description) {
-            // Found the description!
             console.log('Premium description found via session_id!');
 
             if (intervalId) clearInterval(intervalId);

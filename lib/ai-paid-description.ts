@@ -120,23 +120,16 @@ function buildWriterPropertyMessage(record: ListingRecord): string {
   });
 }
 
-export interface PaidDescriptionResult {
-  analyzerOutput: string;
-  description: string;
-}
+export type { ListingRecord };
 
 /**
- * Run the two-step paid description pipeline:
- * 1. Analyzer (GPT-5.1) → structured JSON brief
- * 2. Writer (GPT-5-mini) → ~250-word description
+ * Step 1: Run the analyzer (GPT-5.1) to produce a structured JSON brief.
+ * Should complete within ~5s, well under Vercel Hobby 10s limit.
  */
-export async function runPaidDescriptionPipeline(
-  record: ListingRecord
-): Promise<PaidDescriptionResult> {
+export async function runAnalyzer(record: ListingRecord): Promise<string> {
   const client = getClient();
 
-  // Step 1: Analyzer
-  const analyzerResponse = await client.chat.completions.create({
+  const response = await client.chat.completions.create({
     model: ANALYZER_MODEL,
     messages: [
       { role: 'system', content: ANALYZER_SYSTEM_PROMPT },
@@ -144,13 +137,25 @@ export async function runPaidDescriptionPipeline(
     ],
   });
 
-  const analyzerOutput = analyzerResponse.choices[0]?.message?.content;
-  if (!analyzerOutput) {
+  const output = response.choices[0]?.message?.content;
+  if (!output) {
     throw new Error('OpenAI returned empty response for paid analyzer');
   }
+  return output;
+}
 
-  // Step 2: Writer
-  const writerResponse = await client.chat.completions.create({
+/**
+ * Step 2: Run the writer (GPT-5-mini) to produce a ~250-word description.
+ * Takes the analyzer JSON output as input.
+ * Should complete within ~3-5s, well under Vercel Hobby 10s limit.
+ */
+export async function runWriter(
+  analyzerOutput: string,
+  record: ListingRecord
+): Promise<string> {
+  const client = getClient();
+
+  const response = await client.chat.completions.create({
     model: WRITER_MODEL,
     messages: [
       { role: 'system', content: WRITER_SYSTEM_PROMPT },
@@ -159,10 +164,9 @@ export async function runPaidDescriptionPipeline(
     ],
   });
 
-  const description = writerResponse.choices[0]?.message?.content;
-  if (!description) {
+  const output = response.choices[0]?.message?.content;
+  if (!output) {
     throw new Error('OpenAI returned empty response for paid writer');
   }
-
-  return { analyzerOutput, description };
+  return output;
 }
