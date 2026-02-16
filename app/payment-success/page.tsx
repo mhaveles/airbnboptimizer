@@ -25,6 +25,20 @@ function PaymentSuccessContent() {
       return;
     }
 
+    // Fire-and-forget: trigger paid description generation
+    // The Stripe webhook sets status to "paid_webhook2_triggered",
+    // this call runs the AI pipeline and saves results to Airtable.
+    // We don't await — polling below will detect the result.
+    if (recordId) {
+      fetch('/api/generate-description', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ recordId }),
+      }).catch((err) => {
+        console.error('Failed to trigger description generation:', err);
+      });
+    }
+
     let pollCount = 0;
     let intervalId: NodeJS.Timeout | null = null;
     let timeoutId: NodeJS.Timeout | null = null;
