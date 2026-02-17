@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getTable } from '@/lib/airtable';
 import { runAnalyzer, runWriter, type ListingRecord } from '@/lib/ai-paid-description';
 import { sendDescriptionEmail } from '@/lib/email';
+import { serializeError } from '@/lib/error-utils';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -121,12 +122,13 @@ export async function POST(request: NextRequest) {
         });
       }
     }
-  } catch (error) {
-    console.error('Error in /api/generate-description:', error);
+  } catch (error: unknown) {
+    const message = serializeError(error);
+    console.error('Error in /api/generate-description:', message, error);
     return NextResponse.json(
       {
         error: 'Failed to generate description',
-        message: error instanceof Error ? error.message : 'Unknown error',
+        message,
       },
       { status: 500 }
     );

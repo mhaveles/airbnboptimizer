@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { getTable } from '@/lib/airtable';
+import { serializeError } from '@/lib/error-utils';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -80,12 +81,13 @@ export async function POST(request: NextRequest) {
       record_id: recordId,
       stripe_session_id: sessionId,
     });
-  } catch (error) {
-    console.error('Error in /api/stripe-webhook:', error);
+  } catch (error: unknown) {
+    const message = serializeError(error);
+    console.error('Error in /api/stripe-webhook:', message, error);
     return NextResponse.json(
       {
         error: 'Webhook handler failed',
-        message: error instanceof Error ? error.message : 'Unknown error',
+        message,
       },
       { status: 500 }
     );

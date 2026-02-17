@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
+import { serializeError } from '@/lib/error-utils';
 
 // Force Node.js runtime (not Edge) to ensure env vars are available
 export const runtime = 'nodejs';
@@ -127,7 +128,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         error: 'Failed to create checkout session',
-        message: error instanceof Error ? error.message : 'Unknown error',
+        message: error instanceof Error ? error.message : serializeError(error),
       },
       { status: 500 }
     );

@@ -3,6 +3,7 @@ import { getTable } from '@/lib/airtable';
 import { getRunStatus, fetchDatasetItems } from '@/lib/apify';
 import { mapApifyToAirtable, getPromptExtras } from '@/lib/scrape-mapper';
 import { runFreemiumAnalysis } from '@/lib/ai-analysis';
+import { serializeError } from '@/lib/error-utils';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -129,12 +130,13 @@ export async function GET(request: NextRequest) {
       default:
         return NextResponse.json({ status: status || 'unknown' });
     }
-  } catch (error) {
-    console.error('Error in /api/poll-status:', error);
+  } catch (error: unknown) {
+    const message = serializeError(error);
+    console.error('Error in /api/poll-status:', message, error);
     return NextResponse.json(
       {
         error: 'Failed to check status',
-        message: error instanceof Error ? error.message : 'Unknown error',
+        message,
       },
       { status: 500 }
     );

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Airtable from 'airtable';
+import { serializeError } from '@/lib/error-utils';
 
 // Force Node.js runtime (not Edge) to ensure env vars are available
 export const runtime = 'nodejs';
@@ -114,7 +115,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(
       {
         error: 'Failed to fetch record',
-        message: error instanceof Error ? error.message : 'Unknown error',
+        message: serializeError(error),
       },
       { status: 500 }
     );
