@@ -27,9 +27,9 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const airbnbUrl = body.airbnbUrl;
-    const email = body.email;
-    const emailSource = body.email_source;
+    const airbnbUrl: string | undefined = body.airbnbUrl;
+    const email: string | undefined = body.email;
+    const emailSource: string | undefined = body.email_source;
 
     if (!airbnbUrl || typeof airbnbUrl !== 'string') {
       return NextResponse.json(
@@ -44,7 +44,6 @@ export async function POST(request: NextRequest) {
     // Create the Airtable record with initial data
     // Note: runId/datasetId are returned to the client (not stored in Airtable)
     // so we don't need extra Airtable columns for them.
-    // Only include fields that exist in the Airtable schema.
     const table = getTable();
     const fields: Record<string, string> = {
       'Listing URL': airbnbUrl,
@@ -53,6 +52,14 @@ export async function POST(request: NextRequest) {
     };
     if (email) fields['Email'] = email;
     if (emailSource) fields['Email Source'] = emailSource;
+
+    // UTM tracking fields — Airtable columns match these exact names
+    const utmKeys = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term'] as const;
+    for (const key of utmKeys) {
+      if (body[key] && typeof body[key] === 'string') {
+        fields[key] = body[key];
+      }
+    }
 
     const records = await table.create([{ fields }]);
 
