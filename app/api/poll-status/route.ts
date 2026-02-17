@@ -12,6 +12,8 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const recordId = searchParams.get('recordId');
+    const runId = searchParams.get('runId');
+    const datasetId = searchParams.get('datasetId');
 
     if (!recordId || !recordId.startsWith('rec')) {
       return NextResponse.json(
@@ -26,9 +28,8 @@ export async function GET(request: NextRequest) {
 
     switch (status) {
       case 'scraping': {
-        const runId = record.get('Apify Run ID') as string;
         if (!runId) {
-          return NextResponse.json({ status: 'error', message: 'No Apify run ID found' });
+          return NextResponse.json({ status: 'error', message: 'No runId provided' });
         }
 
         const apifyStatus = await getRunStatus(runId);
@@ -38,7 +39,9 @@ export async function GET(request: NextRequest) {
         }
 
         if (apifyStatus === 'SUCCEEDED') {
-          const datasetId = record.get('Apify Dataset ID') as string;
+          if (!datasetId) {
+            return NextResponse.json({ status: 'error', message: 'No datasetId provided' });
+          }
           const items = await fetchDatasetItems(datasetId);
 
           if (!items || items.length === 0) {

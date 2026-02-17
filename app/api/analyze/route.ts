@@ -39,14 +39,14 @@ export async function POST(request: NextRequest) {
     const { runId, datasetId } = await startActorRun(airbnbUrl);
 
     // Create the Airtable record with initial data
+    // Note: runId/datasetId are returned to the client (not stored in Airtable)
+    // so we don't need extra Airtable columns for them.
     const table = getTable();
     const records = await table.create([
       {
         fields: {
           'Listing URL': airbnbUrl,
           Status: 'scraping',
-          'Apify Run ID': runId,
-          'Apify Dataset ID': datasetId,
           'Date Captured': new Date().toISOString().split('T')[0],
           ...(email && { Email: email }),
           ...(email_source && { email_source }),
@@ -62,6 +62,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       status: 'success',
       recordId: records[0].id,
+      runId,
+      datasetId,
     });
   } catch (error: unknown) {
     const message = serializeError(error);

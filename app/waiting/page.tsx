@@ -74,7 +74,7 @@ function WaitingContent() {
           throw new Error(errData.message || 'Failed to start analysis');
         }
 
-        const { recordId } = await initResponse.json();
+        const { recordId, runId, datasetId } = await initResponse.json();
         if (!recordId) {
           throw new Error('No recordId returned from /api/analyze');
         }
@@ -87,8 +87,13 @@ function WaitingContent() {
           if (abortedRef.current) return;
 
           try {
+            const pollParams = new URLSearchParams({
+              recordId,
+              ...(runId && { runId }),
+              ...(datasetId && { datasetId }),
+            });
             const pollResponse = await fetch(
-              `/api/poll-status?recordId=${encodeURIComponent(recordId)}`
+              `/api/poll-status?${pollParams.toString()}`
             );
             const data = await pollResponse.json();
 
