@@ -45,9 +45,11 @@ export async function POST(request: NextRequest) {
     // Note: runId/datasetId are returned to the client (not stored in Airtable)
     // so we don't need extra Airtable columns for them.
     const table = getTable();
+    // Don't set Status on create — it's a Single Select field in Airtable
+    // and only has pre-existing options (analyzed, paid_webhook2_triggered, etc.).
+    // poll-status infers "scraping" state from empty Status.
     const fields: Record<string, string> = {
       'Listing URL': airbnbUrl,
-      Status: 'scraping',
       'Date Captured': new Date().toISOString().split('T')[0],
     };
     if (email) fields['Email'] = email;

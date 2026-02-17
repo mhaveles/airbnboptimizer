@@ -34,11 +34,13 @@ function buildListingData(record: any): ListingRecord {
  * State machine for paid description generation.
  * Each call does at most ONE AI call to fit within Vercel Hobby 10s timeout.
  *
- * States:
- *   "analyzed" (webhook hasn't fired yet) → { status: "waiting_for_payment" }
- *   "paid_webhook2_triggered" → run analyzer → save → status = "paid_description_analyzing"
- *   "paid_description_analyzing" → run writer → save + email → status = "premium_description_completed"
- *   "premium_description_completed" → return description
+ * Only writes Status values that exist as Airtable Single Select options:
+ *   "paid_webhook2_triggered" (set by Stripe webhook)
+ *   "premium_description_completed" (set here after writer finishes)
+ *
+ * Intermediate state is inferred from data:
+ *   - paid_webhook2_triggered + no Description Prompt → run analyzer
+ *   - paid_webhook2_triggered + has Description Prompt → run writer
  */
 export async function POST(request: NextRequest) {
   try {
@@ -55,73 +57,66 @@ export async function POST(request: NextRequest) {
     const record = await table.find(recordId);
     const status = record.get('Status') as string;
 
-    switch (status) {
-      // Stripe webhook hasn't fired yet — tell frontend to wait
-      case 'analyzed': {
-        return NextResponse.json({ status: 'waiting_for_payment' });
-      }
+    // Already done — return the description
+    if (status === 'premium_description_completed') {
+      const description = record.get('Paid Description') as string;
+      return NextResponse.json({
+        status: 'complete',
+        description: description || '',
+      });
+    }
 
-      // Step 1: Run analyzer (one AI call, ~5s)
-      case 'paid_webhook2_triggered': {
+    // Stripe webhook hasn't fired yet — tell frontend to wait
+    if (status === 'analyzed') {
+      return NextResponse.json({ status: 'waiting_for_payment' });
+    }
+
+    // Paid flow: use Description Prompt field to distinguish analyzer vs writer step
+    if (status === 'paid_webhook2_triggered') {
+      const existingPrompt = record.get('Description Prompt') as string | undefined;
+
+      if (!existingPrompt) {
+        // Step 1: Run analyzer (one AI call, ~5s)
         const listingData = buildListingData(record);
         const analyzerOutput = await runAnalyzer(listingData);
 
+        // Save analyzer output — don't change Status (no select option for intermediate state)
         await table.update(recordId, {
           'Description Prompt': analyzerOutput,
-          Status: 'paid_description_analyzing',
         });
 
         return NextResponse.json({ status: 'analyzing' });
       }
 
       // Step 2: Run writer (one AI call, ~3-5s) + send email
-      case 'paid_description_analyzing': {
-        const analyzerOutput = record.get('Description Prompt') as string;
-        if (!analyzerOutput) {
-          return NextResponse.json({
-            status: 'error',
-            message: 'Analyzer output missing',
-          });
-        }
+      const listingData = buildListingData(record);
+      const description = await runWriter(existingPrompt, listingData);
 
-        const listingData = buildListingData(record);
-        const description = await runWriter(analyzerOutput, listingData);
+      // "premium_description_completed" exists as a Single Select option
+      await table.update(recordId, {
+        'Paid Description': description,
+        Status: 'premium_description_completed',
+      });
 
-        await table.update(recordId, {
-          'Paid Description': description,
-          Status: 'premium_description_completed',
-        });
-
-        // Send email — don't fail the request if email fails
-        const email = record.get('Email') as string | undefined;
-        if (email) {
-          sendDescriptionEmail(email, description).catch((err) => {
-            console.error('Failed to send description email:', err);
-          });
-        }
-
-        return NextResponse.json({
-          status: 'complete',
-          description,
+      // Send email — don't fail the request if email fails
+      const email = record.get('Email') as string | undefined;
+      if (email) {
+        sendDescriptionEmail(email, description).catch((err) => {
+          console.error('Failed to send description email:', err);
         });
       }
 
-      // Already done — return the description
-      case 'premium_description_completed': {
-        const description = record.get('Paid Description') as string;
-        return NextResponse.json({
-          status: 'complete',
-          description: description || '',
-        });
-      }
-
-      default: {
-        return NextResponse.json({
-          status: 'unknown',
-          message: `Unexpected status: ${status}`,
-        });
-      }
+      return NextResponse.json({
+        status: 'complete',
+        description,
+      });
     }
+
+    // Unknown or unexpected status
+    return NextResponse.json({
+      status: 'unknown',
+      message: `Unexpected status: ${status}`,
+    });
   } catch (error: unknown) {
     const message = serializeError(error);
     console.error('Error in /api/generate-description:', message, error);
