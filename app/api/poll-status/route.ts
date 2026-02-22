@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getTable } from '@/lib/airtable';
 import { getRunStatus, fetchDatasetItems } from '@/lib/apify';
-import { mapApifyToAirtable, getPromptExtras } from '@/lib/scrape-mapper';
+import { mapApifyToAirtable } from '@/lib/scrape-mapper';
 import { runFreemiumAnalysis } from '@/lib/ai-analysis';
 import { serializeError } from '@/lib/error-utils';
 
@@ -22,6 +22,21 @@ export const dynamic = 'force-dynamic';
  */
 export async function GET(request: NextRequest) {
   try {
+    // Validate required env vars upfront
+    const missingEnvVars = [
+      !process.env.APIFY_API_TOKEN && 'APIFY_API_TOKEN',
+      !(process.env.AIRTABLE_API_KEY || process.env.AIRTABLE_PERSONAL_ACCESS_TOKEN) && 'AIRTABLE_API_KEY',
+      !process.env.AIRTABLE_BASE_ID && 'AIRTABLE_BASE_ID',
+      !process.env.OPENAI_API_KEY && 'OPENAI_API_KEY',
+    ].filter(Boolean);
+
+    if (missingEnvVars.length > 0) {
+      return NextResponse.json(
+        { status: 'error', message: `Missing environment variables: ${missingEnvVars.join(', ')}` },
+        { status: 500 }
+      );
+    }
+
     const { searchParams } = new URL(request.url);
     const recordId = searchParams.get('recordId');
     const runId = searchParams.get('runId');
@@ -29,7 +44,7 @@ export async function GET(request: NextRequest) {
 
     if (!recordId || !recordId.startsWith('rec')) {
       return NextResponse.json(
-        { error: 'Valid recordId is required' },
+        { status: 'error', message: 'Valid recordId is required' },
         { status: 400 }
       );
     }
@@ -61,8 +76,8 @@ export async function GET(request: NextRequest) {
         'Latitude, Longitude': (record.get('Latitude, Longitude') as string) || '',
         City: (record.get('City') as string) || '',
         'Maximum Guests': record.get('Maximum Guests') as number | undefined,
-        'Number of Beds': (record.get('Number of Beds') as string) || '',
-        Bathrooms: (record.get('Bathrooms') as string) || '',
+        'Number of Beds': record.get('Number of Beds') as number | undefined,
+        Bathrooms: record.get('Bathrooms') as number | undefined,
         Bedrooms: record.get('Bedrooms') as number | undefined,
         'Host Name': (record.get('Host Name') as string) || '',
         'Host ID': (record.get('Host ID') as string) || '',
@@ -131,7 +146,11 @@ export async function GET(request: NextRequest) {
       const scrapedFields = mapApifyToAirtable(item);
 
       // Save scraped fields to Airtable (don't set Status — no select option for it)
-      await table.update(recordId, { ...scrapedFields });
+      // Filter out undefined values — Airtable rejects them for Number fields
+      const cleanFields = Object.fromEntries(
+        Object.entries(scrapedFields).filter(([, v]) => v !== undefined)
+      );
+      await table.update(recordId, cleanFields);
 
       // Tell client to poll again — next poll will see Headline and run AI
       return NextResponse.json({ status: 'scraped' });
@@ -146,10 +165,7 @@ export async function GET(request: NextRequest) {
     const message = serializeError(error);
     console.error('Error in /api/poll-status:', message, error);
     return NextResponse.json(
-      {
-        error: 'Failed to check status',
-        message,
-      },
+      { status: 'error', message },
       { status: 500 }
     );
   }

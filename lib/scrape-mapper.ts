@@ -11,8 +11,8 @@ export interface AirtableListingFields {
   'Latitude, Longitude': string;
   City: string;
   'Maximum Guests': number | undefined;
-  'Number of Beds': string;
-  Bathrooms: string;
+  'Number of Beds': number | undefined;
+  Bathrooms: number | undefined;
   Bedrooms: number | undefined;
   'Host Name': string;
   'Host ID': string;
@@ -39,10 +39,10 @@ function getRatingByIndex(
   return reviewSummary[index].localizedRating;
 }
 
-function extractNumber(label: string | undefined): string {
-  if (!label) return '';
+function parseLeadingInt(label: string | undefined): number | undefined {
+  if (!label) return undefined;
   const match = label.match(/^(\d+)/);
-  return match ? match[1] : '';
+  return match ? parseInt(match[1], 10) : undefined;
 }
 
 /**
@@ -79,8 +79,8 @@ export function mapApifyToAirtable(item: any): AirtableListingFields {
       : '',
     City: item.city || '',
     'Maximum Guests': item.numberOfGuests,
-    'Number of Beds': extractNumber(item.bedLabel),
-    Bathrooms: extractNumber(item.bathroomLabel),
+    'Number of Beds': parseLeadingInt(item.bedLabel),
+    Bathrooms: parseLeadingInt(item.bathroomLabel),
     Bedrooms: item.bedrooms,
     'Host Name': item.primaryHost?.firstName || '',
     'Host ID': item.primaryHost?.id ? String(item.primaryHost.id) : '',

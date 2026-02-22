@@ -120,8 +120,8 @@ property_type: ${fields['Property Type']}
 city: ${fields.City}
 lat_long: ${fields['Latitude, Longitude']}
 bedrooms: ${fields.Bedrooms ?? ''}
-bathrooms: ${fields.Bathrooms}
-beds: ${fields['Number of Beds']}
+bathrooms: ${fields.Bathrooms ?? ''}
+beds: ${fields['Number of Beds'] ?? ''}
 max_guests: ${fields['Maximum Guests'] ?? ''}
 
 rating: ${fields['Overall Rating'] ?? ''}

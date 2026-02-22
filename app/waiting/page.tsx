@@ -19,6 +19,7 @@ function WaitingContent() {
   const [error, setError] = useState<ErrorInfo | null>(null);
   const [statusText, setStatusText] = useState('Starting analysis...');
   const abortedRef = useRef(false);
+  const consecutiveErrorsRef = useRef(0);
 
   useEffect(() => {
     // Capture UTM parameters from URL and store in sessionStorage
@@ -99,6 +100,27 @@ function WaitingContent() {
 
             if (abortedRef.current) return;
 
+            // Track consecutive server errors — bail after 3
+            if (!pollResponse.ok) {
+              consecutiveErrorsRef.current += 1;
+              console.error('Poll server error:', pollResponse.status, data);
+              if (consecutiveErrorsRef.current >= 3) {
+                cleanup();
+                trackError('server_error', data.message || `Server error ${pollResponse.status}`);
+                setError({
+                  userMessage: 'Something went wrong analyzing your listing. Please try again.',
+                  technicalMessage: data.message || `Server error ${pollResponse.status}`,
+                  action: 'retry',
+                });
+                return;
+              }
+              pollId = setTimeout(poll, POLL_INTERVAL_MS);
+              return;
+            }
+
+            // Reset consecutive error count on success
+            consecutiveErrorsRef.current = 0;
+
             switch (data.status) {
               case 'scraping':
                 setStatusText('Scraping your listing...');
@@ -142,7 +164,19 @@ function WaitingContent() {
             }
           } catch (pollErr) {
             if (abortedRef.current) return;
+            consecutiveErrorsRef.current += 1;
             console.error('Poll error:', pollErr);
+            if (consecutiveErrorsRef.current >= 3) {
+              cleanup();
+              const msg = pollErr instanceof Error ? pollErr.message : 'Network error';
+              trackError('poll_error', msg);
+              setError({
+                userMessage: 'Something went wrong analyzing your listing. Please try again.',
+                technicalMessage: msg,
+                action: 'retry',
+              });
+              return;
+            }
             pollId = setTimeout(poll, POLL_INTERVAL_MS);
           }
         };
