@@ -39,8 +39,16 @@ function getRatingByIndex(
   return reviewSummary[index].localizedRating;
 }
 
-function parseLeadingInt(label: string | undefined): number | undefined {
-  if (!label || typeof label !== 'string') return undefined;
+function toNumber(val: unknown): number | undefined {
+  if (val == null) return undefined;
+  const n = Number(val);
+  return Number.isFinite(n) ? n : undefined;
+}
+
+function parseLeadingInt(label: unknown): number | undefined {
+  if (label == null) return undefined;
+  if (typeof label === 'number') return Number.isFinite(label) ? label : undefined;
+  if (typeof label !== 'string') return undefined;
   const match = label.match(/^(\d+)/);
   return match ? parseInt(match[1], 10) : undefined;
 }
@@ -73,27 +81,27 @@ export function mapApifyToAirtable(item: any): AirtableListingFields {
     Headline: item.name || '',
     'Property Type': item.roomType || '',
     'Amenities List': Array.isArray(item.amenities) ? item.amenities.join(', ') : '',
-    'Overall Rating': item.stars,
+    'Overall Rating': toNumber(item.stars),
     'Latitude, Longitude': item.location
       ? `${item.location.lat}, ${item.location.lng}`
       : '',
     City: item.city || '',
-    'Maximum Guests': item.numberOfGuests,
+    'Maximum Guests': toNumber(item.numberOfGuests),
     'Number of Beds': parseLeadingInt(item.bedLabel),
     Bathrooms: parseLeadingInt(item.bathroomLabel),
-    Bedrooms: item.bedrooms,
+    Bedrooms: toNumber(item.bedrooms),
     'Host Name': item.primaryHost?.firstName || '',
     'Host ID': item.primaryHost?.id ? String(item.primaryHost.id) : '',
     Description: seoDescription,
     'Cover Photo URL': item.photos?.[0]?.large || '',
     'Cover Photo Caption': item.photos?.[0]?.caption || '',
-    'Number of Reviews': item.reviews?.reviewsCount,
-    'Accuracy Rating': getRatingByIndex(reviewSummary, 0),
-    'Communication Rating': getRatingByIndex(reviewSummary, 1),
-    'Cleanliness Rating': getRatingByIndex(reviewSummary, 2),
-    'Location Rating': getRatingByIndex(reviewSummary, 3),
-    'Check In Rating': getRatingByIndex(reviewSummary, 4),
-    'Value Rating': getRatingByIndex(reviewSummary, 5),
+    'Number of Reviews': toNumber(item.reviews?.reviewsCount),
+    'Accuracy Rating': toNumber(getRatingByIndex(reviewSummary, 0)),
+    'Communication Rating': toNumber(getRatingByIndex(reviewSummary, 1)),
+    'Cleanliness Rating': toNumber(getRatingByIndex(reviewSummary, 2)),
+    'Location Rating': toNumber(getRatingByIndex(reviewSummary, 3)),
+    'Check In Rating': toNumber(getRatingByIndex(reviewSummary, 4)),
+    'Value Rating': toNumber(getRatingByIndex(reviewSummary, 5)),
     'SEO heading': seoHeading,
     'Superhost Status': item.primaryHost?.isSuperhost ? 'Yes' : 'No',
     'Photo Notes': buildPhotoNotes(item.photos),

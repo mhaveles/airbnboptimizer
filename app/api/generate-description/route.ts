@@ -24,8 +24,8 @@ function buildListingData(record: any): ListingRecord {
     'Latitude, Longitude': (record.get('Latitude, Longitude') as string) || undefined,
     'Property Type': (record.get('Property Type') as string) || undefined,
     'Maximum Guests': record.get('Maximum Guests') as number | undefined,
-    'Number of Beds': (record.get('Number of Beds') as string) || undefined,
-    Bathrooms: (record.get('Bathrooms') as string) || undefined,
+    'Number of Beds': record.get('Number of Beds') as number | undefined,
+    Bathrooms: record.get('Bathrooms') as number | undefined,
     Bedrooms: record.get('Bedrooms') as number | undefined,
   };
 }

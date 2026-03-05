@@ -79,8 +79,8 @@ interface ListingRecord {
   'Latitude, Longitude'?: string;
   'Property Type'?: string;
   'Maximum Guests'?: number;
-  'Number of Beds'?: string;
-  Bathrooms?: string;
+  'Number of Beds'?: number;
+  Bathrooms?: number;
   Bedrooms?: number;
 }
 
@@ -103,17 +103,17 @@ function buildAnalyzerUserMessage(record: ListingRecord): string {
     latitude_longitude: record['Latitude, Longitude'] || '',
     property_type: record['Property Type'] || '',
     guest_capacity: record['Maximum Guests'] ?? null,
-    num_beds: record['Number of Beds'] || '',
-    num_bathrooms: record.Bathrooms || '',
+    num_beds: record['Number of Beds'] ?? null,
+    num_bathrooms: record.Bathrooms ?? null,
     num_bedrooms: record.Bedrooms ?? null,
   });
 }
 
 function buildWriterPropertyMessage(record: ListingRecord): string {
   return JSON.stringify({
-    beds: record['Number of Beds'] || '',
+    beds: record['Number of Beds'] ?? '',
     bedrooms: record.Bedrooms ?? '',
-    bathrooms: record.Bathrooms || '',
+    bathrooms: record.Bathrooms ?? '',
     property_type: record['Property Type'] || '',
     guest_capacity: record['Maximum Guests'] ?? '',
     city: record.City || '',
