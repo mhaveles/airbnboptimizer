@@ -78,10 +78,10 @@ interface ListingRecord {
   City?: string;
   'Latitude, Longitude'?: string;
   'Property Type'?: string;
-  'Maximum Guests'?: number;
-  'Number of Beds'?: number;
-  Bathrooms?: number;
-  Bedrooms?: number;
+  'Maximum Guests'?: string;
+  'Number of Beds'?: string;
+  Bathrooms?: string;
+  Bedrooms?: string;
 }
 
 function buildAnalyzerUserMessage(record: ListingRecord): string {

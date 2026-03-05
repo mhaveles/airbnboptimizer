@@ -10,10 +10,10 @@ export interface AirtableListingFields {
   'Overall Rating': number | undefined;
   'Latitude, Longitude': string;
   City: string;
-  'Maximum Guests': number | undefined;
-  'Number of Beds': number | undefined;
-  Bathrooms: number | undefined;
-  Bedrooms: number | undefined;
+  'Maximum Guests': string;
+  'Number of Beds': string;
+  Bathrooms: string;
+  Bedrooms: string;
   'Host Name': string;
   'Host ID': string;
   Description: string;
@@ -86,10 +86,10 @@ export function mapApifyToAirtable(item: any): AirtableListingFields {
       ? `${item.location.lat}, ${item.location.lng}`
       : '',
     City: item.city || '',
-    'Maximum Guests': toNumber(item.numberOfGuests),
-    'Number of Beds': parseLeadingInt(item.bedLabel),
-    Bathrooms: parseLeadingInt(item.bathroomLabel),
-    Bedrooms: toNumber(item.bedrooms),
+    'Maximum Guests': item.numberOfGuests != null ? String(item.numberOfGuests) : '',
+    'Number of Beds': parseLeadingInt(item.bedLabel) != null ? String(parseLeadingInt(item.bedLabel)) : '',
+    Bathrooms: parseLeadingInt(item.bathroomLabel) != null ? String(parseLeadingInt(item.bathroomLabel)) : '',
+    Bedrooms: item.bedrooms != null ? String(item.bedrooms) : '',
     'Host Name': item.primaryHost?.firstName || '',
     'Host ID': item.primaryHost?.id ? String(item.primaryHost.id) : '',
     Description: seoDescription,
