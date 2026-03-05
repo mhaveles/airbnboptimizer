@@ -49,10 +49,8 @@ export async function GET(request: NextRequest) {
   }
 
   // Step 1: Fetch record from Airtable
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let table: any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let record: any;
+  let table: ReturnType<typeof getTable>;
+  let record: { get(field: string): unknown };
   try {
     table = getTable();
     record = await table.find(recordId);
@@ -206,7 +204,7 @@ export async function GET(request: NextRequest) {
 
     // Step 5: Update Airtable with scraped data
     try {
-      await table.update(recordId, cleanFields as any);
+      await table.update(recordId, cleanFields as Record<string, string | number | boolean>);
     } catch (error: unknown) {
       const msg = serializeError(error);
       console.error('Airtable update failed:', msg, error);
