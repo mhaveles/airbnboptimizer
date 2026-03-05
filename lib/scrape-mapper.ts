@@ -12,7 +12,7 @@ export interface AirtableListingFields {
   City: string;
   'Maximum Guests': number | undefined;
   'Number of Beds': string;
-  Bathrooms: string;
+  Bathrooms: number | undefined;
   Bedrooms: string;
   'Host Name': string;
   'Host ID': string;
@@ -88,7 +88,7 @@ export function mapApifyToAirtable(item: any): AirtableListingFields {
     City: item.city || '',
     'Maximum Guests': toNumber(item.numberOfGuests),
     'Number of Beds': parseLeadingInt(item.bedLabel) != null ? String(parseLeadingInt(item.bedLabel)) : '',
-    Bathrooms: parseLeadingInt(item.bathroomLabel) != null ? String(parseLeadingInt(item.bathroomLabel)) : '',
+    Bathrooms: parseLeadingInt(item.bathroomLabel),
     Bedrooms: item.bedrooms != null ? String(item.bedrooms) : '',
     'Host Name': item.primaryHost?.firstName || '',
     'Host ID': item.primaryHost?.id ? String(item.primaryHost.id) : '',

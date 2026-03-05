@@ -88,7 +88,7 @@ export async function GET(request: NextRequest) {
         City: (record.get('City') as string) || '',
         'Maximum Guests': record.get('Maximum Guests') as number | undefined,
         'Number of Beds': (record.get('Number of Beds') as string) || '',
-        Bathrooms: (record.get('Bathrooms') as string) || '',
+        Bathrooms: record.get('Bathrooms') as number | undefined,
         Bedrooms: (record.get('Bedrooms') as string) || '',
         'Host Name': (record.get('Host Name') as string) || '',
         'Host ID': (record.get('Host ID') as string) || '',

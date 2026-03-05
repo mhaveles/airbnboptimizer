@@ -80,7 +80,7 @@ interface ListingRecord {
   'Property Type'?: string;
   'Maximum Guests'?: number;
   'Number of Beds'?: string;
-  Bathrooms?: string;
+  Bathrooms?: number;
   Bedrooms?: string;
 }
 
