@@ -29,7 +29,6 @@ export interface AirtableListingFields {
   'SEO heading': string;
   'Superhost Status': boolean;
   'Number of Photos': number | undefined;
-  'Photo Notes': string;
 }
 
 function getRatingByIndex(
@@ -52,22 +51,6 @@ function parseLeadingInt(label: unknown): number | undefined {
   if (typeof label !== 'string') return undefined;
   const match = label.match(/^(\d+)/);
   return match ? parseInt(match[1], 10) : undefined;
-}
-
-/**
- * Build photo notes string from photos array.
- * Format: "1. {caption} - {url}\n2. ..."
- */
-function buildPhotoNotes(photos: Array<{ caption?: string; large?: string }> | undefined): string {
-  if (!photos || photos.length === 0) return '';
-
-  return photos
-    .map((photo, i) => {
-      const caption = photo.caption || 'No caption';
-      const url = photo.large || '';
-      return `${i + 1}. ${caption} - ${url}`;
-    })
-    .join('\n');
 }
 
 /**
@@ -106,7 +89,6 @@ export function mapApifyToAirtable(item: any): AirtableListingFields {
     'SEO heading': seoHeading,
     'Superhost Status': !!item.primaryHost?.isSuperhost,
     'Number of Photos': Array.isArray(item.photos) ? item.photos.length : undefined,
-    'Photo Notes': buildPhotoNotes(item.photos),
   };
 }
 

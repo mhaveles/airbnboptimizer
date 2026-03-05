@@ -143,13 +143,6 @@ description:
 ${fields.Description}`;
 }
 
-function buildPhotoMessage(photoNotes: string): string {
-  return `Here are the listing photos for you to analyze.
-
-Here are the images and captions
-${photoNotes}`;
-}
-
 /**
  * Run the freemium listing analysis using OpenAI.
  * Returns the analysis text.
@@ -164,14 +157,6 @@ export async function runFreemiumAnalysis(
     { role: 'system', content: SYSTEM_PROMPT },
     { role: 'user', content: buildUserMessage(fields, extras) },
   ];
-
-  // Add photo message if we have photos
-  if (fields['Photo Notes']) {
-    messages.push({
-      role: 'user',
-      content: buildPhotoMessage(fields['Photo Notes']),
-    });
-  }
 
   const response = await client.chat.completions.create({
     model: FREEMIUM_MODEL,

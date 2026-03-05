@@ -105,7 +105,6 @@ export async function GET(request: NextRequest) {
         'SEO heading': (record.get('SEO heading') as string) || '',
         'Superhost Status': !!record.get('Superhost Status'),
         'Number of Photos': record.get('Number of Photos') as number | undefined,
-        'Photo Notes': (record.get('Photo Notes') as string) || '',
       };
 
       const extras = {
