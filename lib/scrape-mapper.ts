@@ -27,7 +27,8 @@ export interface AirtableListingFields {
   'Check In Rating': number | undefined;
   'Value Rating': number | undefined;
   'SEO heading': string;
-  'Superhost Status': string;
+  'Superhost Status': boolean;
+  'Number of Photos': number | undefined;
   'Photo Notes': string;
 }
 
@@ -103,7 +104,8 @@ export function mapApifyToAirtable(item: any): AirtableListingFields {
     'Check In Rating': toNumber(getRatingByIndex(reviewSummary, 4)),
     'Value Rating': toNumber(getRatingByIndex(reviewSummary, 5)),
     'SEO heading': seoHeading,
-    'Superhost Status': item.primaryHost?.isSuperhost ? 'Yes' : 'No',
+    'Superhost Status': !!item.primaryHost?.isSuperhost,
+    'Number of Photos': Array.isArray(item.photos) ? item.photos.length : undefined,
     'Photo Notes': buildPhotoNotes(item.photos),
   };
 }
