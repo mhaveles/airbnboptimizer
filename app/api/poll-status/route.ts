@@ -21,53 +21,66 @@ export const dynamic = 'force-dynamic';
  *   - Status is "analyzed"          → done
  */
 export async function GET(request: NextRequest) {
+  // Validate required env vars upfront
+  const missingEnvVars = [
+    !process.env.APIFY_API_TOKEN && 'APIFY_API_TOKEN',
+    !(process.env.AIRTABLE_API_KEY || process.env.AIRTABLE_PERSONAL_ACCESS_TOKEN) && 'AIRTABLE_API_KEY',
+    !process.env.AIRTABLE_BASE_ID && 'AIRTABLE_BASE_ID',
+    !process.env.OPENAI_API_KEY && 'OPENAI_API_KEY',
+  ].filter(Boolean);
+
+  if (missingEnvVars.length > 0) {
+    return NextResponse.json(
+      { status: 'error', message: `Missing environment variables: ${missingEnvVars.join(', ')}` },
+      { status: 500 }
+    );
+  }
+
+  const { searchParams } = new URL(request.url);
+  const recordId = searchParams.get('recordId');
+  const runId = searchParams.get('runId');
+  const datasetId = searchParams.get('datasetId');
+
+  if (!recordId || !recordId.startsWith('rec')) {
+    return NextResponse.json(
+      { status: 'error', message: 'Valid recordId is required' },
+      { status: 400 }
+    );
+  }
+
+  // Step 1: Fetch record from Airtable
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let table: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let record: any;
   try {
-    // Validate required env vars upfront
-    const missingEnvVars = [
-      !process.env.APIFY_API_TOKEN && 'APIFY_API_TOKEN',
-      !(process.env.AIRTABLE_API_KEY || process.env.AIRTABLE_PERSONAL_ACCESS_TOKEN) && 'AIRTABLE_API_KEY',
-      !process.env.AIRTABLE_BASE_ID && 'AIRTABLE_BASE_ID',
-      !process.env.OPENAI_API_KEY && 'OPENAI_API_KEY',
-    ].filter(Boolean);
+    table = getTable();
+    record = await table.find(recordId);
+  } catch (error: unknown) {
+    return NextResponse.json(
+      { status: 'error', message: `Airtable find failed: ${serializeError(error)}` },
+      { status: 500 }
+    );
+  }
 
-    if (missingEnvVars.length > 0) {
-      return NextResponse.json(
-        { status: 'error', message: `Missing environment variables: ${missingEnvVars.join(', ')}` },
-        { status: 500 }
-      );
-    }
+  const status = record.get('Status') as string | undefined;
 
-    const { searchParams } = new URL(request.url);
-    const recordId = searchParams.get('recordId');
-    const runId = searchParams.get('runId');
-    const datasetId = searchParams.get('datasetId');
+  // Already analyzed — done
+  if (status === 'analyzed') {
+    return NextResponse.json({ status: 'complete', recordId });
+  }
 
-    if (!recordId || !recordId.startsWith('rec')) {
-      return NextResponse.json(
-        { status: 'error', message: 'Valid recordId is required' },
-        { status: 400 }
-      );
-    }
+  // Already in paid flow or beyond — also done for freemium purposes
+  if (status === 'paid_webhook2_triggered' || status === 'premium_description_completed') {
+    return NextResponse.json({ status: 'complete', recordId });
+  }
 
-    const table = getTable();
-    const record = await table.find(recordId);
-    const status = record.get('Status') as string | undefined;
+  // Check if we already have scraped data (Headline populated)
+  const hasScrapedData = !!record.get('Headline');
 
-    // Already analyzed — done
-    if (status === 'analyzed') {
-      return NextResponse.json({ status: 'complete', recordId });
-    }
-
-    // Already in paid flow or beyond — also done for freemium purposes
-    if (status === 'paid_webhook2_triggered' || status === 'premium_description_completed') {
-      return NextResponse.json({ status: 'complete', recordId });
-    }
-
-    // Check if we already have scraped data (Headline populated)
-    const hasScrapedData = !!record.get('Headline');
-
-    // If we have scraped data but no AI response yet → run AI analysis
-    if (hasScrapedData && !record.get('Freemium AI Response')) {
+  // If we have scraped data but no AI response yet → run AI analysis
+  if (hasScrapedData && !record.get('Freemium AI Response')) {
+    try {
       const fields = {
         Headline: (record.get('Headline') as string) || '',
         'Property Type': (record.get('Property Type') as string) || '',
@@ -76,8 +89,8 @@ export async function GET(request: NextRequest) {
         'Latitude, Longitude': (record.get('Latitude, Longitude') as string) || '',
         City: (record.get('City') as string) || '',
         'Maximum Guests': record.get('Maximum Guests') as number | undefined,
-        'Number of Beds': (record.get('Number of Beds') as string) || '',
-        Bathrooms: (record.get('Bathrooms') as string) || '',
+        'Number of Beds': record.get('Number of Beds') as number | undefined,
+        Bathrooms: record.get('Bathrooms') as number | undefined,
         Bedrooms: record.get('Bedrooms') as number | undefined,
         'Host Name': (record.get('Host Name') as string) || '',
         'Host ID': (record.get('Host ID') as string) || '',
@@ -111,62 +124,107 @@ export async function GET(request: NextRequest) {
       });
 
       return NextResponse.json({ status: 'analyzed', recordId });
-    }
-
-    // If we already have the AI response → done
-    if (hasScrapedData && record.get('Freemium AI Response')) {
-      return NextResponse.json({ status: 'complete', recordId });
-    }
-
-    // No scraped data yet → still scraping, check Apify run status
-    if (!runId) {
-      return NextResponse.json({ status: 'error', message: 'No runId provided' });
-    }
-
-    const apifyStatus = await getRunStatus(runId);
-
-    if (apifyStatus === 'RUNNING' || apifyStatus === 'READY') {
-      return NextResponse.json({ status: 'scraping' });
-    }
-
-    if (apifyStatus === 'SUCCEEDED') {
-      if (!datasetId) {
-        return NextResponse.json({ status: 'error', message: 'No datasetId provided' });
-      }
-      const items = await fetchDatasetItems(datasetId);
-
-      if (!items || items.length === 0) {
-        return NextResponse.json({
-          status: 'error',
-          message: 'Scraper returned no results',
-        });
-      }
-
-      const item = items[0];
-      const scrapedFields = mapApifyToAirtable(item);
-
-      // Save scraped fields to Airtable (don't set Status — no select option for it)
-      // Filter out undefined values — Airtable rejects them for Number fields
-      const cleanFields = Object.fromEntries(
-        Object.entries(scrapedFields).filter(([, v]) => v !== undefined)
+    } catch (error: unknown) {
+      const msg = serializeError(error);
+      console.error('AI analysis failed:', msg, error);
+      return NextResponse.json(
+        { status: 'error', message: `AI analysis failed: ${msg}` },
+        { status: 500 }
       );
-      await table.update(recordId, cleanFields);
-
-      // Tell client to poll again — next poll will see Headline and run AI
-      return NextResponse.json({ status: 'scraped' });
     }
+  }
 
-    // FAILED, ABORTED, TIMED-OUT
-    return NextResponse.json({
-      status: 'error',
-      message: `Scraper ${apifyStatus.toLowerCase()}`,
-    });
+  // If we already have the AI response → done
+  if (hasScrapedData && record.get('Freemium AI Response')) {
+    return NextResponse.json({ status: 'complete', recordId });
+  }
+
+  // No scraped data yet → still scraping, check Apify run status
+  if (!runId) {
+    return NextResponse.json({ status: 'error', message: 'No runId provided' });
+  }
+
+  // Step 2: Check Apify run status
+  let apifyStatus: string;
+  try {
+    apifyStatus = await getRunStatus(runId);
   } catch (error: unknown) {
-    const message = serializeError(error);
-    console.error('Error in /api/poll-status:', message, error);
+    const msg = serializeError(error);
+    console.error('Apify getRunStatus failed:', msg, error);
     return NextResponse.json(
-      { status: 'error', message },
+      { status: 'error', message: `Apify status check failed: ${msg}` },
       { status: 500 }
     );
   }
+
+  if (apifyStatus === 'RUNNING' || apifyStatus === 'READY') {
+    return NextResponse.json({ status: 'scraping' });
+  }
+
+  if (apifyStatus === 'SUCCEEDED') {
+    if (!datasetId) {
+      return NextResponse.json({ status: 'error', message: 'No datasetId provided' });
+    }
+
+    // Step 3: Fetch dataset items from Apify
+    let items: any[];
+    try {
+      items = await fetchDatasetItems(datasetId);
+    } catch (error: unknown) {
+      const msg = serializeError(error);
+      console.error('Apify fetchDatasetItems failed:', msg, error);
+      return NextResponse.json(
+        { status: 'error', message: `Apify dataset fetch failed: ${msg}` },
+        { status: 500 }
+      );
+    }
+
+    // Timing: dataset may not be populated immediately after SUCCEEDED.
+    // Return "scraping" so the client retries instead of treating it as a permanent error.
+    if (!items || items.length === 0) {
+      console.warn('Apify run SUCCEEDED but dataset is empty — will retry on next poll');
+      return NextResponse.json({ status: 'scraping' });
+    }
+
+    // Step 4: Map Apify data to Airtable fields
+    const item = items[0];
+    let cleanFields: Record<string, unknown>;
+    try {
+      const scrapedFields = mapApifyToAirtable(item);
+      // Filter out undefined values — Airtable rejects them
+      cleanFields = Object.fromEntries(
+        Object.entries(scrapedFields).filter(([, v]) => v !== undefined)
+      );
+    } catch (error: unknown) {
+      const msg = serializeError(error);
+      console.error('Data mapping failed:', msg, error);
+      return NextResponse.json(
+        { status: 'error', message: `Data mapping failed: ${msg}` },
+        { status: 500 }
+      );
+    }
+
+    // Step 5: Update Airtable with scraped data
+    try {
+      await table.update(recordId, cleanFields as any);
+    } catch (error: unknown) {
+      const msg = serializeError(error);
+      console.error('Airtable update failed:', msg, error);
+      // Include which fields we tried to write for debugging
+      const fieldNames = Object.keys(cleanFields).join(', ');
+      return NextResponse.json(
+        { status: 'error', message: `Airtable update failed: ${msg}. Fields attempted: ${fieldNames}` },
+        { status: 500 }
+      );
+    }
+
+    // Tell client to poll again — next poll will see Headline and run AI
+    return NextResponse.json({ status: 'scraped' });
+  }
+
+  // FAILED, ABORTED, TIMED-OUT
+  return NextResponse.json({
+    status: 'error',
+    message: `Scraper ${apifyStatus.toLowerCase()}`,
+  });
 }
