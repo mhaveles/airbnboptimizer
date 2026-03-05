@@ -86,7 +86,7 @@ export async function GET(request: NextRequest) {
         'Overall Rating': record.get('Overall Rating') as number | undefined,
         'Latitude, Longitude': (record.get('Latitude, Longitude') as string) || '',
         City: (record.get('City') as string) || '',
-        'Maximum Guests': (record.get('Maximum Guests') as string) || '',
+        'Maximum Guests': record.get('Maximum Guests') as number | undefined,
         'Number of Beds': (record.get('Number of Beds') as string) || '',
         Bathrooms: (record.get('Bathrooms') as string) || '',
         Bedrooms: (record.get('Bedrooms') as string) || '',

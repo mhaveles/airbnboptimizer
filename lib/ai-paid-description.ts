@@ -78,7 +78,7 @@ interface ListingRecord {
   City?: string;
   'Latitude, Longitude'?: string;
   'Property Type'?: string;
-  'Maximum Guests'?: string;
+  'Maximum Guests'?: number;
   'Number of Beds'?: string;
   Bathrooms?: string;
   Bedrooms?: string;
