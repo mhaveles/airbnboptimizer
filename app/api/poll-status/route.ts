@@ -212,7 +212,9 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Step 5: Update Airtable with scraped data
+    // Step 5: Update Airtable with scraped data (include run/dataset IDs for traceability)
+    if (runId) cleanFields['Apify Run ID'] = runId;
+    if (datasetId) cleanFields['Request ID'] = datasetId;
     try {
       await table.update(recordId, cleanFields as Record<string, string | number | boolean>);
     } catch (error: unknown) {
