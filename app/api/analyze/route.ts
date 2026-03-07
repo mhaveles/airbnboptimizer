@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getTable } from '@/lib/airtable';
 import { startActorRun } from '@/lib/apify';
 import { serializeError } from '@/lib/error-utils';
+import { UTM_KEYS } from '@/lib/utm';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -55,8 +56,7 @@ export async function POST(request: NextRequest) {
     if (emailSource) fields['Email Source'] = emailSource;
 
     // UTM tracking fields — Airtable columns match these exact names
-    const utmKeys = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term'] as const;
-    for (const key of utmKeys) {
+    for (const key of UTM_KEYS) {
       if (body[key] && typeof body[key] === 'string') {
         fields[key] = body[key];
       }
@@ -64,9 +64,7 @@ export async function POST(request: NextRequest) {
 
     const records = await table.create([{ fields }]);
     const recordId = records[0].id;
-
-    // Write the Airtable record ID as the Request ID (replaces Make.com execution ID)
-    await table.update(recordId, { 'Request ID': recordId });
+    // Request ID (= recordId) is written in poll-status along with scraped data
 
     return NextResponse.json({
       status: 'success',

@@ -4,6 +4,7 @@ import { getRunStatus, fetchDatasetItems } from '@/lib/apify';
 import { mapApifyToAirtable, getPromptExtras } from '@/lib/scrape-mapper';
 import { runFreemiumAnalysis } from '@/lib/ai-analysis';
 import { serializeError } from '@/lib/error-utils';
+import { validateRecordId } from '@/lib/validation';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -37,16 +38,18 @@ export async function GET(request: NextRequest) {
   }
 
   const { searchParams } = new URL(request.url);
-  const recordId = searchParams.get('recordId');
+  const rawRecordId = searchParams.get('recordId');
   const runId = searchParams.get('runId');
   const datasetId = searchParams.get('datasetId');
 
-  if (!recordId || !recordId.startsWith('rec')) {
+  const validation = validateRecordId(rawRecordId);
+  if (!validation.isValid) {
     return NextResponse.json(
-      { status: 'error', message: 'Valid recordId is required' },
+      { status: 'error', message: validation.error },
       { status: 400 }
     );
   }
+  const recordId = rawRecordId as string; // validated above
 
   // Step 1: Fetch record from Airtable
   let table: ReturnType<typeof getTable>;
@@ -188,17 +191,10 @@ export async function GET(request: NextRequest) {
     // Step 4: Map Apify data to Airtable fields
     const item = items[0];
 
-    // Debug: log raw photo structure so we can verify field names
-    if (Array.isArray(item.photos) && item.photos.length > 0) {
-      console.log('[poll-status] Raw Apify photo keys:', Object.keys(item.photos[0]));
-      console.log('[poll-status] First 3 photos sample:', JSON.stringify(item.photos.slice(0, 3), null, 2));
-    } else {
-      console.log('[poll-status] No photos array in Apify response');
-    }
-
+    let scrapedFields;
     let cleanFields: Record<string, unknown>;
     try {
-      const scrapedFields = mapApifyToAirtable(item);
+      scrapedFields = mapApifyToAirtable(item);
       // Filter out undefined values — Airtable rejects them
       cleanFields = Object.fromEntries(
         Object.entries(scrapedFields).filter(([, v]) => v !== undefined)
@@ -212,40 +208,48 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Step 5: Update Airtable with scraped data (include run/dataset IDs for traceability)
+    // Step 5: Save scraped data to Airtable and run AI analysis concurrently.
+    // The Airtable write and AI call are independent — AI reads from `item`, not Airtable.
     if (runId) cleanFields['Apify Run ID'] = runId;
     cleanFields['Request ID'] = recordId;
-    try {
-      await table.update(recordId, cleanFields as Record<string, string | number | boolean>);
-    } catch (error: unknown) {
+
+    const airtableWrite = table.update(
+      recordId,
+      cleanFields as Record<string, string | number | boolean>
+    ).catch((error: unknown) => {
       const msg = serializeError(error);
       console.error('Airtable update failed:', msg, error);
-      // Include which fields we tried to write for debugging
+      throw error;
+    });
+
+    const extras = getPromptExtras(item);
+    const aiAnalysis = runFreemiumAnalysis(scrapedFields, extras).catch((error: unknown) => {
+      const msg = serializeError(error);
+      console.error('AI analysis failed after scrape:', msg, error);
+      return null; // Non-fatal — scraped data is still saved
+    });
+
+    // Wait for both; Airtable write must succeed, AI is best-effort
+    try {
+      const [, analysis] = await Promise.all([airtableWrite, aiAnalysis]);
+
+      if (analysis) {
+        await table.update(recordId, {
+          'Freemium AI Response': analysis,
+          Status: 'analyzed',
+        });
+        return NextResponse.json({ status: 'analyzed', recordId });
+      }
+
+      // AI failed but scraped data saved — client can retry via hasScrapedData path
+      return NextResponse.json({ status: 'scraped' });
+    } catch (error: unknown) {
+      const msg = serializeError(error);
       const fieldNames = Object.keys(cleanFields).join(', ');
       return NextResponse.json(
         { status: 'error', message: `Airtable update failed: ${msg}. Fields attempted: ${fieldNames}` },
         { status: 500 }
       );
-    }
-
-    // Step 6: Run AI analysis immediately with raw Apify data (includes photo URLs)
-    try {
-      const scrapedFields = mapApifyToAirtable(item);
-      const extras = getPromptExtras(item);
-      const analysis = await runFreemiumAnalysis(scrapedFields, extras);
-
-      await table.update(recordId, {
-        'Freemium AI Response': analysis,
-        Status: 'analyzed',
-      });
-
-      return NextResponse.json({ status: 'analyzed', recordId });
-    } catch (error: unknown) {
-      const msg = serializeError(error);
-      console.error('AI analysis failed after scrape:', msg, error);
-      // Scraped data is saved — client can retry and the existing
-      // hasScrapedData path will pick it up (without photo URLs)
-      return NextResponse.json({ status: 'scraped' });
     }
   }
 
