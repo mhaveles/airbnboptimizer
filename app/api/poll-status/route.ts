@@ -187,6 +187,15 @@ export async function GET(request: NextRequest) {
 
     // Step 4: Map Apify data to Airtable fields
     const item = items[0];
+
+    // Debug: log raw photo structure so we can verify field names
+    if (Array.isArray(item.photos) && item.photos.length > 0) {
+      console.log('[poll-status] Raw Apify photo keys:', Object.keys(item.photos[0]));
+      console.log('[poll-status] First 3 photos sample:', JSON.stringify(item.photos.slice(0, 3), null, 2));
+    } else {
+      console.log('[poll-status] No photos array in Apify response');
+    }
+
     let cleanFields: Record<string, unknown>;
     try {
       const scrapedFields = mapApifyToAirtable(item);

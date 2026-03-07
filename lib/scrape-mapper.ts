@@ -92,7 +92,13 @@ export function mapApifyToAirtable(item: any): AirtableListingFields {
     'Number of Photos': Array.isArray(item.photos) ? item.photos.length : undefined,
     'Photo Captions': Array.isArray(item.photos)
       ? item.photos
-          .map((p: { caption?: string }, i: number) => `${i + 1}. ${p.caption || '(no caption)'}`)
+          .map((p: Record<string, unknown>, i: number) => {
+            const parts: string[] = [];
+            if (p.caption) parts.push(String(p.caption));
+            if (p.pictureOrientation) parts.push(String(p.pictureOrientation).toLowerCase());
+            if (p.isProfessional) parts.push('professional');
+            return `${i + 1}. ${parts.length > 0 ? parts.join(' | ') : '(no caption)'}`;
+          })
           .join('\n')
       : '',
   };
