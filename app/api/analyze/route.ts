@@ -50,7 +50,6 @@ export async function POST(request: NextRequest) {
       'Listing URL': airbnbUrl,
       'Date Captured': new Date().toISOString().split('T')[0],
       'Apify Run ID': runId,
-      'Request ID': datasetId,
     };
     if (email) fields['Email'] = email;
     if (emailSource) fields['Email Source'] = emailSource;
@@ -64,10 +63,14 @@ export async function POST(request: NextRequest) {
     }
 
     const records = await table.create([{ fields }]);
+    const recordId = records[0].id;
+
+    // Write the Airtable record ID as the Request ID (replaces Make.com execution ID)
+    await table.update(recordId, { 'Request ID': recordId });
 
     return NextResponse.json({
       status: 'success',
-      recordId: records[0].id,
+      recordId,
       runId,
       datasetId,
     });
