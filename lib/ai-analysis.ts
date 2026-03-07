@@ -159,9 +159,17 @@ export async function runFreemiumAnalysis(
 ): Promise<string> {
   const client = getClient();
 
+  const userMessage = buildUserMessage(fields, extras);
+  console.log('[ai-analysis] Photo fields sent to GPT:', {
+    photoCount: fields['Number of Photos'],
+    coverCaption: fields['Cover Photo Caption'],
+    photoCaptionsLength: fields['Photo Captions']?.length ?? 0,
+    photoCaptionsPreview: fields['Photo Captions']?.slice(0, 200) || '(empty)',
+  });
+
   const messages: OpenAI.ChatCompletionMessageParam[] = [
     { role: 'system', content: SYSTEM_PROMPT },
-    { role: 'user', content: buildUserMessage(fields, extras) },
+    { role: 'user', content: userMessage },
   ];
 
   const response = await client.chat.completions.create({
