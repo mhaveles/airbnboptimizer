@@ -29,6 +29,7 @@ export interface AirtableListingFields {
   'SEO heading': string;
   'Superhost Status': boolean;
   'Number of Photos': number | undefined;
+  'Photo Captions': string;
 }
 
 function getRatingByIndex(
@@ -89,6 +90,11 @@ export function mapApifyToAirtable(item: any): AirtableListingFields {
     'SEO heading': seoHeading,
     'Superhost Status': !!item.primaryHost?.isSuperhost,
     'Number of Photos': Array.isArray(item.photos) ? item.photos.length : undefined,
+    'Photo Captions': Array.isArray(item.photos)
+      ? item.photos
+          .map((p: { caption?: string }, i: number) => `${i + 1}. ${p.caption || '(no caption)'}`)
+          .join('\n')
+      : '',
   };
 }
 

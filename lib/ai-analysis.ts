@@ -139,6 +139,12 @@ host_response_time: ${extras.hostResponseTime}
 
 amenities: ${fields['Amenities List']}
 
+photo_count: ${fields['Number of Photos'] ?? ''}
+cover_photo_caption: ${fields['Cover Photo Caption'] || 'unknown'}
+
+photo_captions:
+${fields['Photo Captions'] || 'No photo captions available'}
+
 description:
 ${fields.Description}`;
 }
