@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getTable } from '@/lib/airtable';
 import { getRunStatus, fetchDatasetItems } from '@/lib/apify';
-import { mapApifyToAirtable } from '@/lib/scrape-mapper';
+import { mapApifyToAirtable, getPromptExtras } from '@/lib/scrape-mapper';
 import { runFreemiumAnalysis } from '@/lib/ai-analysis';
 import { serializeError } from '@/lib/error-utils';
 
@@ -226,8 +226,25 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Tell client to poll again — next poll will see Headline and run AI
-    return NextResponse.json({ status: 'scraped' });
+    // Step 6: Run AI analysis immediately with raw Apify data (includes photo URLs)
+    try {
+      const scrapedFields = mapApifyToAirtable(item);
+      const extras = getPromptExtras(item);
+      const analysis = await runFreemiumAnalysis(scrapedFields, extras);
+
+      await table.update(recordId, {
+        'Freemium AI Response': analysis,
+        Status: 'analyzed',
+      });
+
+      return NextResponse.json({ status: 'analyzed', recordId });
+    } catch (error: unknown) {
+      const msg = serializeError(error);
+      console.error('AI analysis failed after scrape:', msg, error);
+      // Scraped data is saved — client can retry and the existing
+      // hasScrapedData path will pick it up (without photo URLs)
+      return NextResponse.json({ status: 'scraped' });
+    }
   }
 
   // FAILED, ABORTED, TIMED-OUT

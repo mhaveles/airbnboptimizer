@@ -38,12 +38,13 @@ TONE & BRAND
 WHAT TO EVALUATE
 
 Photos
-- You receive a numbered list of photos with available metadata (caption, orientation, professional flag).
-- Many Airbnb listings have empty captions — if most or all captions say "(no caption)", that IS a key finding: recommend the host add descriptive captions as a fast clarity and SEO win.
-- Use photo_count and the numbered list to confirm photos exist, even if captions are sparse.
-- Which image position is most likely to earn the grid-view click
+- You receive the actual listing photos as images. Examine every photo carefully.
+- You also receive a numbered metadata list with captions, orientation, and professional flag.
+- Match each image to its number in the metadata list (images are in the same order).
+- Evaluate each photo for: composition, lighting, what it shows, and how it serves the listing.
+- Which image is most likely to earn the grid-view click
 - Photo order that builds trust and answers common guest questions
-- Visual gaps that may create uncertainty
+- Visual gaps that may create uncertainty (e.g., missing kitchen, bathroom, or exterior shots)
 - Photo captions:
   - If missing or weak, note this as a fast clarity win
   - If present and effective, briefly explain why they help
@@ -78,12 +79,17 @@ Reason: [1–2 sentences explaining why this image can improve grid-view click-t
 Reason: [1–2 sentences explaining why headline changes were made]
 
 # Top 5 Photo Order
-(only if photo_count > 0; reference photos by their number from the photo_captions list)
-1. Photo [#] [caption if available] – [brief reason]
-2. Photo [#] [caption if available] – [brief reason]
-3. Photo [#] [caption if available] – [brief reason]
-4. Photo [#] [caption if available] – [brief reason]
-5. Photo [#] [caption if available] – [brief reason]
+(only if photo_count > 0; reference photos by number; suggest a caption for each)
+1. Photo [#] – [what you see in the image] – [brief reason for this position]
+   Suggested caption: [short, descriptive caption the host should use]
+2. Photo [#] – [what you see] – [reason]
+   Suggested caption: [caption]
+3. Photo [#] – [what you see] – [reason]
+   Suggested caption: [caption]
+4. Photo [#] – [what you see] – [reason]
+   Suggested caption: [caption]
+5. Photo [#] – [what you see] – [reason]
+   Suggested caption: [caption]
 
 ## Description Review
 - What the description does and does not clearly signal about who this listing is best suited for (guest type, stay purpose, expectations).
@@ -102,7 +108,7 @@ Reason: [1–2 sentences explaining why headline changes were made]
 
 CONSTRAINTS
 - Do NOT rewrite the description.
-- Keep total output under 250 words.
+- Keep total output under 400 words.
 - Be specific, calm, and constructive throughout.
 \u200B`;
 
@@ -110,6 +116,7 @@ interface PromptExtras {
   listingId: string;
   hostResponseRate: string;
   hostResponseTime: string;
+  photoUrls?: string[];
 }
 
 function buildUserMessage(
@@ -162,16 +169,30 @@ export async function runFreemiumAnalysis(
   const client = getClient();
 
   const userMessage = buildUserMessage(fields, extras);
+  const photoUrls = extras.photoUrls || [];
   console.log('[ai-analysis] Photo fields sent to GPT:', {
     photoCount: fields['Number of Photos'],
     coverCaption: fields['Cover Photo Caption'],
     photoCaptionsLength: fields['Photo Captions']?.length ?? 0,
-    photoCaptionsPreview: fields['Photo Captions']?.slice(0, 200) || '(empty)',
+    photoUrlCount: photoUrls.length,
   });
+
+  // Build multimodal content: text + photo images
+  const userContent: OpenAI.ChatCompletionContentPart[] = [
+    { type: 'text', text: userMessage },
+  ];
+
+  // Send up to 30 photos as image URLs for GPT vision
+  for (const url of photoUrls.slice(0, 30)) {
+    userContent.push({
+      type: 'image_url',
+      image_url: { url, detail: 'low' },
+    });
+  }
 
   const messages: OpenAI.ChatCompletionMessageParam[] = [
     { role: 'system', content: SYSTEM_PROMPT },
-    { role: 'user', content: userMessage },
+    { role: 'user', content: userContent },
   ];
 
   const response = await client.chat.completions.create({

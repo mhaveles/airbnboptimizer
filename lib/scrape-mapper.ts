@@ -109,9 +109,16 @@ export function mapApifyToAirtable(item: any): AirtableListingFields {
  * but not stored in Airtable.
  */
 export function getPromptExtras(item: any) {
+  const photoUrls: string[] = Array.isArray(item.photos)
+    ? item.photos
+        .map((p: { large?: string }) => p.large || '')
+        .filter((url: string) => url.length > 0)
+    : [];
+
   return {
     listingId: item.id || '',
     hostResponseRate: item.primaryHost?.responseRateWithoutNa || '',
     hostResponseTime: item.primaryHost?.responseTimeWithoutNa || '',
+    photoUrls,
   };
 }
