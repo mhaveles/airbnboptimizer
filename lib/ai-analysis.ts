@@ -1,15 +1,6 @@
-import OpenAI from 'openai';
+import type Anthropic from '@anthropic-ai/sdk';
 import type { AirtableListingFields } from './scrape-mapper';
-
-const FREEMIUM_MODEL = 'gpt-5.1-2025-11-13';
-
-function getClient(): OpenAI {
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) {
-    throw new Error('OPENAI_API_KEY is not configured');
-  }
-  return new OpenAI({ apiKey });
-}
+import { runClaudeText, REASONING_MODEL } from './anthropic';
 
 const SYSTEM_PROMPT = `You are an Airbnb listing optimization expert for AirbnbOptimizer.com.
 
@@ -159,51 +150,33 @@ ${fields.Description}`;
 }
 
 /**
- * Run the freemium listing analysis using OpenAI.
+ * Run the freemium listing analysis using Claude.
  * Returns the analysis text.
  */
 export async function runFreemiumAnalysis(
   fields: AirtableListingFields,
   extras: PromptExtras
 ): Promise<string> {
-  const client = getClient();
-
   const userMessage = buildUserMessage(fields, extras);
   const photoUrls = extras.photoUrls || [];
-  console.log('[ai-analysis] Photo fields sent to GPT:', {
+  console.log('[ai-analysis] Photo fields sent to Claude:', {
     photoCount: fields['Number of Photos'],
     coverCaption: fields['Cover Photo Caption'],
     photoCaptionsLength: fields['Photo Captions']?.length ?? 0,
     photoUrlCount: photoUrls.length,
   });
 
-  // Build multimodal content: text + photo images
-  const userContent: OpenAI.ChatCompletionContentPart[] = [
-    { type: 'text', text: userMessage },
-  ];
+  // Images first (in metadata order), then the listing text.
+  const userContent: Anthropic.Beta.BetaContentBlockParam[] = photoUrls
+    .slice(0, 30)
+    .map((url) => ({ type: 'image' as const, source: { type: 'url' as const, url } }));
+  userContent.push({ type: 'text', text: userMessage });
 
-  // Send up to 30 photos as image URLs for GPT vision
-  for (const url of photoUrls.slice(0, 30)) {
-    userContent.push({
-      type: 'image_url',
-      image_url: { url, detail: 'low' },
-    });
-  }
-
-  const messages: OpenAI.ChatCompletionMessageParam[] = [
-    { role: 'system', content: SYSTEM_PROMPT },
-    { role: 'user', content: userContent },
-  ];
-
-  const response = await client.chat.completions.create({
-    model: FREEMIUM_MODEL,
-    messages,
+  return runClaudeText({
+    model: REASONING_MODEL,
+    system: SYSTEM_PROMPT,
+    content: userContent,
+    effort: 'medium',
+    label: 'freemium analysis',
   });
-
-  const content = response.choices[0]?.message?.content;
-  if (!content) {
-    throw new Error('OpenAI returned empty response for freemium analysis');
-  }
-
-  return content;
 }

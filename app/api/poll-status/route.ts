@@ -8,7 +8,7 @@ import { validateRecordId } from '@/lib/validation';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-export const maxDuration = 60;
+export const maxDuration = 300;
 
 /**
  * Poll the status of an analysis pipeline.
@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
     !process.env.APIFY_API_TOKEN && 'APIFY_API_TOKEN',
     !(process.env.AIRTABLE_API_KEY || process.env.AIRTABLE_PERSONAL_ACCESS_TOKEN) && 'AIRTABLE_API_KEY',
     !process.env.AIRTABLE_BASE_ID && 'AIRTABLE_BASE_ID',
-    !process.env.OPENAI_API_KEY && 'OPENAI_API_KEY',
+    !process.env.ANTHROPIC_API_KEY && 'ANTHROPIC_API_KEY',
   ].filter(Boolean);
 
   if (missingEnvVars.length > 0) {

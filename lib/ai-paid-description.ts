@@ -1,15 +1,4 @@
-import OpenAI from 'openai';
-
-const ANALYZER_MODEL = 'gpt-5.1-2025-11-13';
-const WRITER_MODEL = 'gpt-5-mini-2025-08-07';
-
-function getClient(): OpenAI {
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) {
-    throw new Error('OPENAI_API_KEY is not configured');
-  }
-  return new OpenAI({ apiKey });
-}
+import { runClaudeText, REASONING_MODEL, EXECUTION_MODEL } from './anthropic';
 
 const ANALYZER_SYSTEM_PROMPT = `You are the Listing Analyzer for AirbnbOptimizer.com.
 
@@ -123,50 +112,33 @@ function buildWriterPropertyMessage(record: ListingRecord): string {
 export type { ListingRecord };
 
 /**
- * Step 1: Run the analyzer (GPT-5.1) to produce a structured JSON brief.
- * Should complete within ~5s, well under Vercel Hobby 10s limit.
+ * Step 1: Run the analyzer (Opus — strategy/reasoning) to produce a structured JSON brief.
  */
 export async function runAnalyzer(record: ListingRecord): Promise<string> {
-  const client = getClient();
-
-  const response = await client.chat.completions.create({
-    model: ANALYZER_MODEL,
-    messages: [
-      { role: 'system', content: ANALYZER_SYSTEM_PROMPT },
-      { role: 'user', content: buildAnalyzerUserMessage(record) },
-    ],
+  const output = await runClaudeText({
+    model: REASONING_MODEL,
+    system: ANALYZER_SYSTEM_PROMPT,
+    content: buildAnalyzerUserMessage(record),
+    effort: 'medium',
+    label: 'paid analyzer',
   });
-
-  const output = response.choices[0]?.message?.content;
-  if (!output) {
-    throw new Error('OpenAI returned empty response for paid analyzer');
-  }
-  return output;
+  // Strip a stray ```json fence if the model adds one.
+  return output.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '');
 }
 
 /**
- * Step 2: Run the writer (GPT-5-mini) to produce a ~250-word description.
+ * Step 2: Run the writer (Sonnet — executes the analyzer's brief) to produce a ~250-word description.
  * Takes the analyzer JSON output as input.
- * Should complete within ~3-5s, well under Vercel Hobby 10s limit.
  */
 export async function runWriter(
   analyzerOutput: string,
   record: ListingRecord
 ): Promise<string> {
-  const client = getClient();
-
-  const response = await client.chat.completions.create({
-    model: WRITER_MODEL,
-    messages: [
-      { role: 'system', content: WRITER_SYSTEM_PROMPT },
-      { role: 'user', content: analyzerOutput },
-      { role: 'user', content: buildWriterPropertyMessage(record) },
-    ],
+  return runClaudeText({
+    model: EXECUTION_MODEL,
+    system: WRITER_SYSTEM_PROMPT,
+    content: `${analyzerOutput}\n\n${buildWriterPropertyMessage(record)}`,
+    effort: 'medium',
+    label: 'paid writer',
   });
-
-  const output = response.choices[0]?.message?.content;
-  if (!output) {
-    throw new Error('OpenAI returned empty response for paid writer');
-  }
-  return output;
 }
