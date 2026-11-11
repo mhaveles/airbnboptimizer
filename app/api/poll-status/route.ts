@@ -1,0 +1,277 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { getTable } from '@/lib/airtable';
+import { getRunStatus, fetchDatasetItems } from '@/lib/apify';
+import { mapApifyToAirtable, getPromptExtras } from '@/lib/scrape-mapper';
+import { runFreemiumAnalysis } from '@/lib/ai-analysis';
+import { serializeError } from '@/lib/error-utils';
+import { validateRecordId } from '@/lib/validation';
+
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+export const maxDuration = 60;
+
+/**
+ * Poll the status of an analysis pipeline.
+ *
+ * The Airtable "Status" field is a Single Select with pre-existing options
+ * from the Make.com era: "analyzed", "paid_webhook2_triggered",
+ * "premium_description_completed". We only write those values.
+ *
+ * Intermediate states are inferred:
+ *   - Status is empty + no Headline → still scraping
+ *   - Status is empty + has Headline → scraped, needs AI analysis
+ *   - Status is "analyzed"          → done
+ */
+export async function GET(request: NextRequest) {
+  // Validate required env vars upfront
+  const missingEnvVars = [
+    !process.env.APIFY_API_TOKEN && 'APIFY_API_TOKEN',
+    !(process.env.AIRTABLE_API_KEY || process.env.AIRTABLE_PERSONAL_ACCESS_TOKEN) && 'AIRTABLE_API_KEY',
+    !process.env.AIRTABLE_BASE_ID && 'AIRTABLE_BASE_ID',
+    !process.env.OPENAI_API_KEY && 'OPENAI_API_KEY',
+  ].filter(Boolean);
+
+  if (missingEnvVars.length > 0) {
+    return NextResponse.json(
+      { status: 'error', message: `Missing environment variables: ${missingEnvVars.join(', ')}` },
+      { status: 500 }
+    );
+  }
+
+  const { searchParams } = new URL(request.url);
+  const rawRecordId = searchParams.get('recordId');
+  const runId = searchParams.get('runId');
+  const datasetId = searchParams.get('datasetId');
+
+  const validation = validateRecordId(rawRecordId);
+  if (!validation.isValid) {
+    return NextResponse.json(
+      { status: 'error', message: validation.error },
+      { status: 400 }
+    );
+  }
+  const recordId = rawRecordId as string; // validated above
+
+  // Step 1: Fetch record from Airtable
+  let table: ReturnType<typeof getTable>;
+  let record: { get(field: string): unknown };
+  try {
+    table = getTable();
+    record = await table.find(recordId);
+  } catch (error: unknown) {
+    return NextResponse.json(
+      { status: 'error', message: `Airtable find failed: ${serializeError(error)}` },
+      { status: 500 }
+    );
+  }
+
+  const status = record.get('Status') as string | undefined;
+
+  // Already analyzed — done
+  if (status === 'analyzed') {
+    return NextResponse.json({ status: 'complete', recordId });
+  }
+
+  // Already in paid flow or beyond — also done for freemium purposes
+  if (status === 'paid_webhook2_triggered' || status === 'premium_description_completed') {
+    return NextResponse.json({ status: 'complete', recordId });
+  }
+
+  // Check if we already have scraped data (Headline populated)
+  const hasScrapedData = !!record.get('Headline');
+
+  // If we have scraped data but no AI response yet → run AI analysis
+  if (hasScrapedData && !record.get('Freemium AI Response')) {
+    try {
+      const fields = {
+        Headline: (record.get('Headline') as string) || '',
+        'Property Type': (record.get('Property Type') as string) || '',
+        'Amenities List': (record.get('Amenities List') as string) || '',
+        'Overall Rating': record.get('Overall Rating') as number | undefined,
+        'Latitude, Longitude': (record.get('Latitude, Longitude') as string) || '',
+        City: (record.get('City') as string) || '',
+        'Maximum Guests': record.get('Maximum Guests') as number | undefined,
+        'Number of Beds': (record.get('Number of Beds') as string) || '',
+        Bathrooms: record.get('Bathrooms') as number | undefined,
+        Bedrooms: (record.get('Bedrooms') as string) || '',
+        'Host Name': (record.get('Host Name') as string) || '',
+        'Host ID': (record.get('Host ID') as string) || '',
+        Description: (record.get('Description') as string) || '',
+        'Cover Photo URL': (record.get('Cover Photo URL') as string) || '',
+        'Cover Photo Caption': (record.get('Cover Photo Caption') as string) || '',
+        'Number of Reviews': record.get('Number of Reviews') as number | undefined,
+        'Accuracy Rating': record.get('Accuracy Rating') as number | undefined,
+        'Communication Rating': record.get('Communication Rating') as number | undefined,
+        'Cleanliness Rating': record.get('Cleanliness Rating') as number | undefined,
+        'Location Rating': record.get('Location Rating') as number | undefined,
+        'Check In Rating': record.get('Check In Rating') as number | undefined,
+        'Value Rating': record.get('Value Rating') as number | undefined,
+        'SEO heading': (record.get('SEO heading') as string) || '',
+        'Superhost Status': !!record.get('Superhost Status'),
+        'Number of Photos': record.get('Number of Photos') as number | undefined,
+        'Photo Captions': (record.get('Photo Captions') as string) || '',
+        'Photo URLs': (record.get('Photo URLs') as string) || '',
+      };
+
+      let photoUrls: string[] = [];
+      const storedPhotoUrls = record.get('Photo URLs') as string | undefined;
+      if (storedPhotoUrls) {
+        try {
+          const parsed = JSON.parse(storedPhotoUrls);
+          if (Array.isArray(parsed)) {
+            photoUrls = parsed.filter((url): url is string => typeof url === 'string');
+          }
+        } catch (error: unknown) {
+          console.error('Failed to parse stored Photo URLs:', serializeError(error));
+        }
+      }
+
+      const extras = {
+        listingId: (record.get('Host ID') as string) || '',
+        hostResponseRate: '',
+        hostResponseTime: '',
+        photoUrls,
+      };
+
+      const analysis = await runFreemiumAnalysis(fields, extras);
+
+      // "analyzed" exists as a Single Select option in Airtable
+      await table.update(recordId, {
+        'Freemium AI Response': analysis,
+        Status: 'analyzed',
+      });
+
+      return NextResponse.json({ status: 'analyzed', recordId });
+    } catch (error: unknown) {
+      const msg = serializeError(error);
+      console.error('AI analysis failed:', msg, error);
+      return NextResponse.json(
+        { status: 'error', message: `AI analysis failed: ${msg}` },
+        { status: 500 }
+      );
+    }
+  }
+
+  // If we already have the AI response → done
+  if (hasScrapedData && record.get('Freemium AI Response')) {
+    return NextResponse.json({ status: 'complete', recordId });
+  }
+
+  // No scraped data yet → still scraping, check Apify run status
+  if (!runId) {
+    return NextResponse.json({ status: 'error', message: 'No runId provided' });
+  }
+
+  // Step 2: Check Apify run status
+  let apifyStatus: string;
+  try {
+    apifyStatus = await getRunStatus(runId);
+  } catch (error: unknown) {
+    const msg = serializeError(error);
+    console.error('Apify getRunStatus failed:', msg, error);
+    return NextResponse.json(
+      { status: 'error', message: `Apify status check failed: ${msg}` },
+      { status: 500 }
+    );
+  }
+
+  if (apifyStatus === 'RUNNING' || apifyStatus === 'READY') {
+    return NextResponse.json({ status: 'scraping' });
+  }
+
+  if (apifyStatus === 'SUCCEEDED') {
+    if (!datasetId) {
+      return NextResponse.json({ status: 'error', message: 'No datasetId provided' });
+    }
+
+    // Step 3: Fetch dataset items from Apify
+    let items: any[];
+    try {
+      items = await fetchDatasetItems(datasetId);
+    } catch (error: unknown) {
+      const msg = serializeError(error);
+      console.error('Apify fetchDatasetItems failed:', msg, error);
+      return NextResponse.json(
+        { status: 'error', message: `Apify dataset fetch failed: ${msg}` },
+        { status: 500 }
+      );
+    }
+
+    // Timing: dataset may not be populated immediately after SUCCEEDED.
+    // Return "scraping" so the client retries instead of treating it as a permanent error.
+    if (!items || items.length === 0) {
+      console.warn('Apify run SUCCEEDED but dataset is empty — will retry on next poll');
+      return NextResponse.json({ status: 'scraping' });
+    }
+
+    // Step 4: Map Apify data to Airtable fields
+    const item = items[0];
+
+    let scrapedFields;
+    let cleanFields: Record<string, unknown>;
+    try {
+      scrapedFields = mapApifyToAirtable(item);
+      // Filter out undefined values — Airtable rejects them
+      cleanFields = Object.fromEntries(
+        Object.entries(scrapedFields).filter(([, v]) => v !== undefined)
+      );
+    } catch (error: unknown) {
+      const msg = serializeError(error);
+      console.error('Data mapping failed:', msg, error);
+      return NextResponse.json(
+        { status: 'error', message: `Data mapping failed: ${msg}` },
+        { status: 500 }
+      );
+    }
+
+    // Step 5: Save scraped data to Airtable and run AI analysis concurrently.
+    // The Airtable write and AI call are independent — AI reads from `item`, not Airtable.
+    if (runId) cleanFields['Apify Run ID'] = runId;
+    cleanFields['Request ID'] = recordId;
+
+    const airtableWrite = table.update(
+      recordId,
+      cleanFields as Record<string, string | number | boolean>
+    ).catch((error: unknown) => {
+      const msg = serializeError(error);
+      console.error('Airtable update failed:', msg, error);
+      throw error;
+    });
+
+    const extras = getPromptExtras(item);
+    const aiAnalysis = runFreemiumAnalysis(scrapedFields, extras).catch((error: unknown) => {
+      const msg = serializeError(error);
+      console.error('AI analysis failed after scrape:', msg, error);
+      return null; // Non-fatal — scraped data is still saved
+    });
+
+    // Wait for both; Airtable write must succeed, AI is best-effort
+    try {
+      const [, analysis] = await Promise.all([airtableWrite, aiAnalysis]);
+
+      if (analysis) {
+        await table.update(recordId, {
+          'Freemium AI Response': analysis,
+          Status: 'analyzed',
+        });
+        return NextResponse.json({ status: 'analyzed', recordId });
+      }
+
+      // AI failed but scraped data saved — client can retry via hasScrapedData path
+      return NextResponse.json({ status: 'scraped' });
+    } catch (error: unknown) {
+      const msg = serializeError(error);
+      const fieldNames = Object.keys(cleanFields).join(', ');
+      return NextResponse.json(
+        { status: 'error', message: `Airtable update failed: ${msg}. Fields attempted: ${fieldNames}` },
+        { status: 500 }
+      );
+    }
+  }
+
+  // FAILED, ABORTED, TIMED-OUT
+  return NextResponse.json({
+    status: 'error',
+    message: `Scraper ${apifyStatus.toLowerCase()}`,
+  });
+}
