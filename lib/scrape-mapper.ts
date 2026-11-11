@@ -47,6 +47,8 @@ function parseLeadingNumber(label: unknown): number | undefined {
   return match ? Number(match[1]) : undefined;
 }
 
+const PLACEHOLDER_CAPTION = /^(overview|listing|selected by hotel|room|property)?\s*(image|photo)\s*\d+$/i;
+
 interface ScrapedImage {
   url: string;
   caption: string;
@@ -59,9 +61,12 @@ function getImages(item: any): ScrapedImage[] {
   return raw
     .map((img: any) => {
       if (typeof img === 'string') return { url: img, caption: '', orientation: '' };
+      const caption: string = img?.caption || img?.accessibilityLabel || '';
       return {
         url: img?.imageUrl || img?.url || img?.large || img?.baseUrl || '',
-        caption: img?.caption || img?.accessibilityLabel || '',
+        // Airbnb auto-labels un-captioned photos ("Overview image 3", "Listing image 5");
+        // those aren't host-written captions, so treat them as empty.
+        caption: PLACEHOLDER_CAPTION.test(caption.trim()) ? '' : caption,
         orientation: img?.orientation || img?.pictureOrientation || '',
       };
     })
@@ -107,6 +112,7 @@ function stripHtml(text: unknown): string {
 
 function getCity(item: any): string {
   if (item.city) return item.city;
+  if (typeof item.location === 'string' && item.location) return item.location;
   if (item.location?.city) return item.location.city;
   const subtitle: string = item.locationSubtitle || item.location?.subtitle || '';
   return subtitle.split(',')[0]?.trim() || '';
@@ -117,6 +123,24 @@ function getCoordinates(item: any): string {
   const lat = c?.latitude ?? c?.lat;
   const lng = c?.longitude ?? c?.lng;
   return lat != null && lng != null ? `${lat}, ${lng}` : '';
+}
+
+/** Hotel listings have no `title`; fall back to the share title ("Name · ★4.74 · Hotel in Denver"). */
+function getHeadline(item: any): string {
+  if (item.title) return item.title;
+  if (item.name) return item.name;
+  const share: string = item.sharingConfigTitle || '';
+  return share.split(' · ')[0]?.trim() || '';
+}
+
+/** Hotel listings often have an empty description; metaDescription holds a truncated version. */
+function getDescription(item: any): string {
+  const full = stripHtml(item.description) || stripHtml(item.htmlDescription?.htmlText);
+  if (full) return full;
+  const meta: string = item.metaDescription || '';
+  // Strip the "Nov 11, 2026 · Room in hotel · " prefix Airbnb puts on meta descriptions.
+  const parts = meta.split(' · ');
+  return (parts.length > 2 ? parts.slice(2).join(' · ') : meta).trim();
 }
 
 function isSuperhost(item: any): boolean {
@@ -133,7 +157,7 @@ export function mapApifyToAirtable(item: any): AirtableListingFields {
   const rating = item.rating ?? {};
 
   return {
-    Headline: item.title || item.name || '',
+    Headline: getHeadline(item),
     'Property Type': item.propertyType || item.roomType || '',
     'Amenities List': getAmenities(item),
     'Overall Rating': toNumber(rating.guestSatisfaction ?? rating.value ?? item.stars),
@@ -145,7 +169,7 @@ export function mapApifyToAirtable(item: any): AirtableListingFields {
     Bedrooms: String(findOverview(overview, /bedroom|studio/i) ?? ''),
     'Host Name': item.host?.name || item.host?.firstName || '',
     'Host ID': item.host?.id ? String(item.host.id) : '',
-    Description: stripHtml(item.description),
+    Description: getDescription(item),
     'Cover Photo URL': images[0]?.url || item.thumbnail || '',
     'Cover Photo Caption': images[0]?.caption || '',
     'Number of Reviews': toNumber(rating.reviewsCount),
@@ -185,5 +209,5 @@ export function getPromptExtras(item: any) {
 
 /** True when the item looks like a real listing (not an error/#debug record). */
 export function hasListingData(item: any): boolean {
-  return !!(item?.title || item?.name) || getImages(item ?? {}).length > 0;
+  return !!(item?.title || item?.name || item?.sharingConfigTitle) || getImages(item ?? {}).length > 0;
 }
