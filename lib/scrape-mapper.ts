@@ -47,7 +47,9 @@ function parseLeadingNumber(label: unknown): number | undefined {
   return match ? Number(match[1]) : undefined;
 }
 
-const PLACEHOLDER_CAPTION = /^(overview|listing|selected by hotel|room|property)?\s*(image|photo)\s*\d+$/i;
+// Matches any "<room/section> image N" auto-label: "Overview image 3", "Living area image 1",
+// "Selected by hotel image 12", "Bedroom 2 photo 4".
+const PLACEHOLDER_CAPTION = /^[\p{L}\d\s'-]*\b(image|photo)\s*\d+$/iu;
 
 interface ScrapedImage {
   url: string;
