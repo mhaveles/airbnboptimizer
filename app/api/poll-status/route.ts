@@ -206,6 +206,22 @@ export async function GET(request: NextRequest) {
 
     // Step 4: Map Apify data to Airtable fields
     const item = items[0];
+    console.log('[apify] dataset item received:', {
+      runId,
+      itemCount: items.length,
+      keys: Object.keys(item ?? {}),
+      preview: JSON.stringify(item).slice(0, 1500),
+    });
+
+    // Guard: the actor can report SUCCEEDED but return an error/empty item.
+    // Don't save blanks or spend an AI call on a listing with no data.
+    if (!item?.name && !Array.isArray(item?.photos)) {
+      console.error('[apify] scrape returned no listing data:', JSON.stringify(item).slice(0, 3000));
+      return NextResponse.json(
+        { status: 'error', message: 'Scraper returned no listing data' },
+        { status: 502 }
+      );
+    }
 
     let scrapedFields;
     let cleanFields: Record<string, unknown>;
