@@ -8,6 +8,7 @@ import { validateRecordId } from '@/lib/validation';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+export const maxDuration = 60;
 
 /**
  * Poll the status of an analysis pipeline.
@@ -109,12 +110,27 @@ export async function GET(request: NextRequest) {
         'Superhost Status': !!record.get('Superhost Status'),
         'Number of Photos': record.get('Number of Photos') as number | undefined,
         'Photo Captions': (record.get('Photo Captions') as string) || '',
+        'Photo URLs': (record.get('Photo URLs') as string) || '',
       };
+
+      let photoUrls: string[] = [];
+      const storedPhotoUrls = record.get('Photo URLs') as string | undefined;
+      if (storedPhotoUrls) {
+        try {
+          const parsed = JSON.parse(storedPhotoUrls);
+          if (Array.isArray(parsed)) {
+            photoUrls = parsed.filter((url): url is string => typeof url === 'string');
+          }
+        } catch (error: unknown) {
+          console.error('Failed to parse stored Photo URLs:', serializeError(error));
+        }
+      }
 
       const extras = {
         listingId: (record.get('Host ID') as string) || '',
         hostResponseRate: '',
         hostResponseTime: '',
+        photoUrls,
       };
 
       const analysis = await runFreemiumAnalysis(fields, extras);
