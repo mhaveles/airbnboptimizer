@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getTable } from '@/lib/airtable';
 import { getRunStatus, fetchDatasetItems } from '@/lib/apify';
-import { mapApifyToAirtable, getPromptExtras } from '@/lib/scrape-mapper';
+import { mapApifyToAirtable, getPromptExtras, hasListingData } from '@/lib/scrape-mapper';
 import { runFreemiumAnalysis } from '@/lib/ai-analysis';
 import { serializeError } from '@/lib/error-utils';
 import { validateRecordId } from '@/lib/validation';
@@ -205,7 +205,8 @@ export async function GET(request: NextRequest) {
     }
 
     // Step 4: Map Apify data to Airtable fields
-    const item = items[0];
+    // Prefer a real listing record over any #debug/error records.
+    const item = items.find(hasListingData) ?? items[0];
     console.log('[apify] dataset item received:', {
       runId,
       itemCount: items.length,
@@ -215,7 +216,7 @@ export async function GET(request: NextRequest) {
 
     // Guard: the actor can report SUCCEEDED but return an error/empty item.
     // Don't save blanks or spend an AI call on a listing with no data.
-    if (!item?.name && !Array.isArray(item?.photos)) {
+    if (!hasListingData(item)) {
       console.error('[apify] scrape returned no listing data:', JSON.stringify(item).slice(0, 3000));
       return NextResponse.json(
         { status: 'error', message: 'Scraper returned no listing data' },

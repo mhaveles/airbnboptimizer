@@ -1,5 +1,7 @@
 const APIFY_BASE_URL = 'https://api.apify.com/v2';
-const ACTOR_ID = 'pIyP4eyT6kBUZ2fHe'; // onidivo/airbnb-scraper
+// tri_angle/airbnb-rooms-urls-scraper — scrapes a single listing URL.
+// (Replaced onidivo/airbnb-scraper, which ignored startUrls and broke ~Sept 2026.)
+const ACTOR_ID = 'OIYrZy1OpUEgIMYmh';
 
 function getToken(): string {
   const token = process.env.APIFY_API_TOKEN;
@@ -27,15 +29,9 @@ export async function startActorRun(airbnbUrl: string): Promise<ApifyRunResult> 
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        addMoreHostInfo: true,
-        calendarMonths: 0,
-        currency: 'USD',
-        extraData: true,
-        maxReviews: 10,
-        proxyConfiguration: { useApifyProxy: true },
         startUrls: [{ url: airbnbUrl }],
-        maxItems: 1,
-        timeoutMs: 60000,
+        locale: 'en-US',
+        currency: 'USD',
       }),
     }
   );
